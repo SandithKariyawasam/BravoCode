@@ -18,19 +18,29 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });
 });
 
-app.post('/api/run', (req, res) => {
-    const { language, code } = req.body;
+const { executeCode } = require('./controller/executeCode');
+const {
+    createProject,
+    getProjects,
+    getProjectById,
+    updateProject,
+    requestJoinProject,
+    respondToJoinRequest,
+    getProjectRequests,
+    removeMember
+} = require('./controller/projectController');
 
-    if (!code) {
-        return res.status(400).json({ error: "No code provided" });
-    }
+app.post('/api/run', executeCode);
+app.post('/api/projects', createProject);
+app.get('/api/projects/:userId', getProjects);
+app.get('/api/project/:projectId', getProjectById);
+app.put('/api/project/:projectId', updateProject);
 
-    res.json({
-        message: "Received code successfully",
-        language: language,
-        output: `[Mock Output] You sent: ${code}`
-    });
-});
+// Join Requests
+app.post('/api/project/:projectId/join', requestJoinProject);
+app.post('/api/project/:projectId/request', respondToJoinRequest);
+app.get('/api/project/:projectId/requests', getProjectRequests);
+app.post('/api/project/:projectId/remove', removeMember);
 
 app.use((err, req, res, next) => {
     console.error(err.stack);

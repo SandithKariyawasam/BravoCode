@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import logo from '../assets/images/BravoCode.png'
 
-const Sidebar = () => {
+const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (tab: string) => void }) => {
     const { logout, currentUser } = useAuth()!;
     const navigate = useNavigate();
 
@@ -27,8 +27,8 @@ const Sidebar = () => {
             <div style={{ flex: 1 }}>
                 <p style={{ fontSize: '0.8rem', color: '#8B949E', fontWeight: 'bold', marginBottom: '0.5rem' }}>MENU</p>
 
-                <NavButton label="My Projects" active />
-                <NavButton label="Shared with Me" />
+                <NavButton label="My Projects" active={activeTab === 'my'} onClick={() => setActiveTab('my')} />
+                <NavButton label="Shared with Me" active={activeTab === 'shared'} onClick={() => setActiveTab('shared')} />
                 <NavButton label="Settings" />
             </div>
 
@@ -71,19 +71,21 @@ const Sidebar = () => {
     );
 };
 
-const NavButton = ({ label, active = false }: { label: string, active?: boolean }) => (
-    <button style={{
-        width: '100%',
-        textAlign: 'left',
-        padding: '10px',
-        backgroundColor: active ? '#1F6FEB' : 'transparent',
-        color: active ? '#ffffff' : '#C9D1D9',
-        border: 'none',
-        borderRadius: '6px',
-        marginBottom: '5px',
-        cursor: 'pointer',
-        fontWeight: active ? 'bold' : 'normal'
-    }}>
+const NavButton = ({ label, active = false, onClick }: { label: string, active?: boolean, onClick?: () => void }) => (
+    <button
+        onClick={onClick}
+        style={{
+            width: '100%',
+            textAlign: 'left',
+            padding: '10px',
+            backgroundColor: active ? '#1F6FEB' : 'transparent',
+            color: active ? '#ffffff' : '#C9D1D9',
+            border: 'none',
+            borderRadius: '6px',
+            marginBottom: '5px',
+            cursor: 'pointer',
+            fontWeight: active ? 'bold' : 'normal'
+        }}>
         {label}
     </button>
 );
