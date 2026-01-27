@@ -221,32 +221,40 @@ const ProjectEditor = () => {
                 </div>
 
                 <div style={{ marginTop: 'auto' }}>
-                    {/* Direct Edit Toggle (Owner Only) */}
-                    {projectData.ownerId === currentUser?.uid && (
-                        <div style={{ marginBottom: '10px', padding: '10px', border: '1px solid #30363D', borderRadius: '6px' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.8rem', cursor: 'pointer', color: isEditingMain ? '#da3633' : '#8B949E' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={isEditingMain}
-                                    onChange={(e) => setIsEditingMain(e.target.checked)}
-                                />
-                                {isEditingMain ? "⚠️ Editing Main Directly" : "Edit Main Branch Manually"}
-                            </label>
-                        </div>
-                    )}
+                    {/* Direct Edit/View Toggle (Available to All) */}
+                    <div style={{ marginBottom: '10px', padding: '10px', border: '1px solid #30363D', borderRadius: '6px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.8rem', cursor: 'pointer', color: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#da3633' : '#58A6FF') : '#8B949E' }}>
+                            <input
+                                type="checkbox"
+                                checked={isEditingMain}
+                                onChange={(e) => setIsEditingMain(e.target.checked)}
+                            />
+                            {isEditingMain
+                                ? (projectData.ownerId === currentUser?.uid ? "⚠️ Editing Main Directly" : "👀 Viewing Main Branch")
+                                : (projectData.ownerId === currentUser?.uid ? "Edit Main Branch Manually" : "View Main Branch Code")
+                            }
+                        </label>
+                    </div>
 
                     <button
                         onClick={handleSave}
-                        disabled={saving}
+                        disabled={saving || (isEditingMain && projectData.ownerId !== currentUser?.uid)}
                         style={{
                             width: '100%', padding: '10px',
-                            backgroundColor: isEditingMain ? '#da3633' : '#1F6FEB', // Red for Danger
-                            color: 'white',
-                            border: 'none', borderRadius: '6px', cursor: 'pointer',
+                            backgroundColor: isEditingMain
+                                ? (projectData.ownerId === currentUser?.uid ? '#da3633' : '#30363D') // Red for Owner, Grey for Viewer
+                                : '#1F6FEB',
+                            color: isEditingMain && projectData.ownerId !== currentUser?.uid ? '#8B949E' : 'white',
+                            border: 'none', borderRadius: '6px',
+                            cursor: (isEditingMain && projectData.ownerId !== currentUser?.uid) ? 'not-allowed' : 'pointer',
                             fontWeight: 'bold'
                         }}
                     >
-                        {saving ? 'Saving...' : (isEditingMain ? '⚠️ Update Main Branch' : 'Save Code')}
+                        {saving ? 'Saving...' : (
+                            isEditingMain
+                                ? (projectData.ownerId === currentUser?.uid ? '⚠️ Update Main Branch' : 'Read Only Mode')
+                                : 'Save Code'
+                        )}
                     </button>
                 </div>
             </div>
@@ -254,9 +262,11 @@ const ProjectEditor = () => {
             {/* CENTER: Monaco Editor */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 {/* Editor Toolbar */}
-                <div style={{ height: '40px', backgroundColor: isEditingMain ? '#3e1515' : '#0D1117', borderBottom: '1px solid #30363D', display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between' }}>
-                    <div style={{ color: isEditingMain ? '#ff7b72' : '#8B949E', fontSize: '0.9rem', fontStyle: 'italic', fontWeight: isEditingMain ? 'bold' : 'normal' }}>
-                        {isEditingMain ? "⚠️ You are editing the MAIN BRANCH directly." : (
+                <div style={{ height: '40px', backgroundColor: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#3e1515' : '#0D1117') : '#0D1117', borderBottom: '1px solid #30363D', display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between' }}>
+                    <div style={{ color: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#ff7b72' : '#58A6FF') : '#8B949E', fontSize: '0.9rem', fontStyle: 'italic', fontWeight: isEditingMain ? 'bold' : 'normal' }}>
+                        {isEditingMain ? (
+                            projectData.ownerId === currentUser?.uid ? "⚠️ You are editing the MAIN BRANCH directly." : "👀 You are viewing the MAIN BRANCH (Read-Only)."
+                        ) : (
                             <>Branch: <span style={{ color: '#58A6FF' }}>{currentUser?.displayName || "Me"}</span></>
                         )}
                     </div>
@@ -286,6 +296,7 @@ const ProjectEditor = () => {
                         fontSize: 14,
                         scrollBeyondLastLine: false,
                         automaticLayout: true,
+                        readOnly: isEditingMain && projectData.ownerId !== currentUser?.uid // ReadOnly for members viewing Main
                     }}
                 />
             </div>
