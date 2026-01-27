@@ -19,6 +19,9 @@ const ProjectEditor = () => {
     const [isMergeOpen, setIsMergeOpen] = useState(false);
     const [mergeTarget, setMergeTarget] = useState<{ id: string, name: string } | null>(null);
 
+    // Direct Main Edit State
+    const [isEditingMain, setIsEditingMain] = useState(false);
+
 
     useEffect(() => {
         if (!projectId || !currentUser) return;
@@ -31,14 +34,19 @@ const ProjectEditor = () => {
                 const data = await res.json();
                 setProjectData(data);
 
-                // 2. Get MY Branch Code
-                const branchRes = await fetch(`http://localhost:5000/api/project/${projectId}/branch/${currentUser.uid}`);
-                if (branchRes.ok) {
-                    const branchData = await branchRes.json();
-                    setCode(branchData.code); // Load MY branch code
-                } else {
-                    // Fallback to Main if branch fetch fails (shouldn't happen due to auto-create)
+                // 2. Get Code based on mode
+                if (isEditingMain) {
                     setCode(data.code || "");
+                } else {
+                    // Get MY Branch Code
+                    const branchRes = await fetch(`http://localhost:5000/api/project/${projectId}/branch/${currentUser.uid}`);
+                    if (branchRes.ok) {
+                        const branchData = await branchRes.json();
+                        setCode(branchData.code); // Load MY branch code
+                    } else {
+                        // Fallback to Main if branch fetch fails (shouldn't happen due to auto-create)
+                        setCode(data.code || "");
+                    }
                 }
 
             } catch (err) {
@@ -49,22 +57,31 @@ const ProjectEditor = () => {
         };
 
         fetchData();
-    }, [projectId, navigate, currentUser]);
+    }, [projectId, navigate, currentUser, isEditingMain]); // Re-fetch when mode changes
 
     const handleSave = async () => {
         if (!projectId || !currentUser) return;
         setSaving(true);
         try {
-            const response = await fetch(`http://localhost:5000/api/project/${projectId}/branch`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: currentUser.uid, code })
-            });
-
-            if (!response.ok) throw new Error("Failed to save");
-
-            // alert("Saved to your branch!"); 
-            alert("Success! Saved to your personal branch.");
+            if (isEditingMain) {
+                // Update Main Project Directly
+                const response = await fetch(`http://localhost:5000/api/project/${projectId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                if (!response.ok) throw new Error("Failed to update Main");
+                alert("⚠️ DANGER: Main Branch Updated Directly!");
+            } else {
+                // Save to User Branch
+                const response = await fetch(`http://localhost:5000/api/project/${projectId}/branch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.uid, code })
+                });
+                if (!response.ok) throw new Error("Failed to save");
+                alert("Success! Saved to your personal branch.");
+            }
         } catch (err) {
             console.error("Failed to save", err);
             alert("Failed to save code.");
@@ -204,17 +221,32 @@ const ProjectEditor = () => {
                 </div>
 
                 <div style={{ marginTop: 'auto' }}>
+                    {/* Direct Edit Toggle (Owner Only) */}
+                    {projectData.ownerId === currentUser?.uid && (
+                        <div style={{ marginBottom: '10px', padding: '10px', border: '1px solid #30363D', borderRadius: '6px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.8rem', cursor: 'pointer', color: isEditingMain ? '#da3633' : '#8B949E' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={isEditingMain}
+                                    onChange={(e) => setIsEditingMain(e.target.checked)}
+                                />
+                                {isEditingMain ? "⚠️ Editing Main Directly" : "Edit Main Branch Manually"}
+                            </label>
+                        </div>
+                    )}
+
                     <button
                         onClick={handleSave}
                         disabled={saving}
                         style={{
                             width: '100%', padding: '10px',
-                            backgroundColor: '#1F6FEB', color: 'white',
+                            backgroundColor: isEditingMain ? '#da3633' : '#1F6FEB', // Red for Danger
+                            color: 'white',
                             border: 'none', borderRadius: '6px', cursor: 'pointer',
                             fontWeight: 'bold'
                         }}
                     >
-                        {saving ? 'Saving...' : 'Save Code'}
+                        {saving ? 'Saving...' : (isEditingMain ? '⚠️ Update Main Branch' : 'Save Code')}
                     </button>
                 </div>
             </div>
@@ -222,9 +254,11 @@ const ProjectEditor = () => {
             {/* CENTER: Monaco Editor */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 {/* Editor Toolbar */}
-                <div style={{ height: '40px', backgroundColor: '#0D1117', borderBottom: '1px solid #30363D', display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between' }}>
-                    <div style={{ color: '#8B949E', fontSize: '0.9rem', fontStyle: 'italic' }}>
-                        Branch: <span style={{ color: '#58A6FF' }}>{currentUser?.displayName || "Me"}</span>
+                <div style={{ height: '40px', backgroundColor: isEditingMain ? '#3e1515' : '#0D1117', borderBottom: '1px solid #30363D', display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between' }}>
+                    <div style={{ color: isEditingMain ? '#ff7b72' : '#8B949E', fontSize: '0.9rem', fontStyle: 'italic', fontWeight: isEditingMain ? 'bold' : 'normal' }}>
+                        {isEditingMain ? "⚠️ You are editing the MAIN BRANCH directly." : (
+                            <>Branch: <span style={{ color: '#58A6FF' }}>{currentUser?.displayName || "Me"}</span></>
+                        )}
                     </div>
 
                     <button
@@ -267,26 +301,28 @@ const ProjectEditor = () => {
             </div>
 
             {/* Merge Modal */}
-            {mergeTarget && currentUser && (
-                <MergeModal
-                    isOpen={isMergeOpen}
-                    onClose={() => setIsMergeOpen(false)}
-                    projectId={projectId!}
-                    ownerId={currentUser.uid}
-                    memberId={mergeTarget.id}
-                    memberName={mergeTarget.name}
-                    language={projectData.language}
-                    onMergeComplete={() => {
-                        // Reload main code?
-                        // Actually, if we merged, our (owner) branch IS updated to main.
-                        // So re-fetching local branch is correct.
-                        // Let's force a reload of everything
-                        window.location.reload();
-                    }}
-                />
-            )}
+            {
+                mergeTarget && currentUser && (
+                    <MergeModal
+                        isOpen={isMergeOpen}
+                        onClose={() => setIsMergeOpen(false)}
+                        projectId={projectId!}
+                        ownerId={currentUser.uid}
+                        memberId={mergeTarget.id}
+                        memberName={mergeTarget.name}
+                        language={projectData.language}
+                        onMergeComplete={() => {
+                            // Reload main code?
+                            // Actually, if we merged, our (owner) branch IS updated to main.
+                            // So re-fetching local branch is correct.
+                            // Let's force a reload of everything
+                            window.location.reload();
+                        }}
+                    />
+                )
+            }
 
-        </div>
+        </div >
     );
 };
 
