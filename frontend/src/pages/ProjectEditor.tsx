@@ -64,7 +64,7 @@ const ProjectEditor = () => {
             if (!response.ok) throw new Error("Failed to save");
 
             // alert("Saved to your branch!"); 
-            // Silent save or toast is better, but alert is fine for now.
+            alert("Success! Saved to your personal branch.");
         } catch (err) {
             console.error("Failed to save", err);
             alert("Failed to save code.");
@@ -163,16 +163,17 @@ const ProjectEditor = () => {
                                     </span>
                                     {member.uid === projectData.ownerId && <span>👑</span>}
 
-                                    {/* Merge Button: Only for Owner, on other members */}
-                                    {currentUser && currentUser.uid === projectData.ownerId && member.uid !== currentUser.uid && (
+                                    {/* Merge Button: Owner can merge anyone including self */}
+                                    {currentUser && currentUser.uid === projectData.ownerId && (
                                         <button
                                             onClick={() => { setMergeTarget({ id: member.uid, name: member.name }); setIsMergeOpen(true); }}
                                             style={{
                                                 marginLeft: '5px', background: 'none', border: 'none',
-                                                color: '#2ea043', cursor: 'pointer', fontSize: '1.2rem', padding: '0 5px',
+                                                color: '#2ea043',
+                                                cursor: 'pointer', fontSize: '1.2rem', padding: '0 5px',
                                                 lineHeight: '1'
                                             }}
-                                            title="Merge Changes"
+                                            title="Merge / Publish"
                                         >
                                             ⛙
                                         </button>
@@ -221,7 +222,11 @@ const ProjectEditor = () => {
             {/* CENTER: Monaco Editor */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 {/* Editor Toolbar */}
-                <div style={{ height: '40px', backgroundColor: '#0D1117', borderBottom: '1px solid #30363D', display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'flex-end' }}>
+                <div style={{ height: '40px', backgroundColor: '#0D1117', borderBottom: '1px solid #30363D', display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between' }}>
+                    <div style={{ color: '#8B949E', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                        Branch: <span style={{ color: '#58A6FF' }}>{currentUser?.displayName || "Me"}</span>
+                    </div>
+
                     <button
                         onClick={handleRun}
                         disabled={isRunning}
