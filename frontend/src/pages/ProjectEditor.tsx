@@ -22,6 +22,9 @@ const ProjectEditor = () => {
     // Direct Main Edit State
     const [isEditingMain, setIsEditingMain] = useState(false);
 
+    // Viewing Member Scope
+    const [viewingMember, setViewingMember] = useState<{ id: string, name: string } | null>(null);
+
     // Merge Status
     const [isMerged, setIsMerged] = useState(false);
 
@@ -40,6 +43,17 @@ const ProjectEditor = () => {
                 // 2. Get Code based on mode
                 if (isEditingMain) {
                     setCode(data.code || "");
+                    setIsMerged(false);
+                } else if (viewingMember) {
+                    // Viewing another member's branch
+                    const branchRes = await fetch(`http://localhost:5000/api/project/${projectId}/branch/${viewingMember.id}`);
+                    if (branchRes.ok) {
+                        const branchData = await branchRes.json();
+                        setCode(branchData.code);
+                        setIsMerged(!!branchData.isMerged);
+                    } else {
+                        setCode("// Unable to load member code");
+                    }
                 } else {
                     // Get MY Branch Code
                     const branchRes = await fetch(`http://localhost:5000/api/project/${projectId}/branch/${currentUser.uid}`);
@@ -64,7 +78,8 @@ const ProjectEditor = () => {
         };
 
         fetchData();
-    }, [projectId, navigate, currentUser, isEditingMain]); // Re-fetch when mode changes
+        fetchData();
+    }, [projectId, navigate, currentUser, isEditingMain, viewingMember]); // Re-fetch when mode changes
 
     const handleSave = async () => {
         if (!projectId || !currentUser) return;
@@ -156,6 +171,30 @@ const ProjectEditor = () => {
         }
     };
 
+    const handleDeleteProject = async () => {
+        if (!projectId || !currentUser) return;
+        if (!confirm("⚠️ DELETE PROJECT?\n\nAre you sure you want to delete this project? This action CANNOT be undone.")) return;
+
+        try {
+            const res = await fetch(`http://localhost:5000/api/project/${projectId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ownerId: currentUser.uid })
+            });
+
+            if (res.ok) {
+                alert("Project deleted successfully.");
+                navigate('/dashboard');
+            } else {
+                const err = await res.json();
+                alert(err.error || "Failed to delete project");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error deleting project");
+        }
+    };
+
     if (!projectData) return <div style={{ color: 'white', padding: '20px' }}>Loading Project...</div>;
 
     return (
@@ -211,12 +250,30 @@ const ProjectEditor = () => {
                                         <button
                                             onClick={() => handleRemoveMember(member.uid)}
                                             style={{
-                                                marginLeft: 'auto', background: 'none', border: 'none',
+                                                marginLeft: '5px', background: 'none', border: 'none',
                                                 color: '#da3633', cursor: 'pointer', fontSize: '1rem', padding: '0 5px'
                                             }}
                                             title="Remove Member"
                                         >
                                             ×
+                                        </button>
+                                    )}
+
+                                    {/* View Code Button: Show for everyone (except self) */}
+                                    {member.uid !== currentUser?.uid && (
+                                        <button
+                                            onClick={() => {
+                                                setIsEditingMain(false); // Disable main view if active
+                                                setViewingMember({ id: member.uid, name: member.name });
+                                            }}
+                                            style={{
+                                                marginLeft: 'auto', background: 'none', border: 'none',
+                                                color: viewingMember?.id === member.uid ? '#58A6FF' : '#8B949E', // Highlight if active
+                                                cursor: 'pointer', fontSize: '1rem', padding: '0 5px'
+                                            }}
+                                            title={`View ${member.name}'s Code`}
+                                        >
+                                            👁️
                                         </button>
                                     )}
                                 </div>
@@ -231,13 +288,30 @@ const ProjectEditor = () => {
                 </div>
 
                 <div style={{ marginTop: 'auto' }}>
+                    {/* Delete Project Button (Owner Only) */}
+                    {currentUser && projectData.ownerId === currentUser.uid && (
+                        <button
+                            onClick={handleDeleteProject}
+                            style={{
+                                width: '100%', marginBottom: '15px', padding: '8px',
+                                background: 'transparent',
+                                border: '1px solid #da3633', borderRadius: '6px',
+                                color: '#da3633', cursor: 'pointer', fontSize: '0.9rem'
+                            }}
+                        >
+                            🗑️ Delete Project
+                        </button>
+                    )}
                     {/* Direct Edit/View Toggle (Available to All) */}
                     <div style={{ marginBottom: '10px', padding: '10px', border: '1px solid #30363D', borderRadius: '6px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.8rem', cursor: 'pointer', color: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#da3633' : '#58A6FF') : '#8B949E' }}>
                             <input
                                 type="checkbox"
                                 checked={isEditingMain}
-                                onChange={(e) => setIsEditingMain(e.target.checked)}
+                                onChange={(e) => {
+                                    setIsEditingMain(e.target.checked);
+                                    if (e.target.checked) setViewingMember(null); // Clear viewing member if main selected
+                                }}
                             />
                             {isEditingMain
                                 ? (projectData.ownerId === currentUser?.uid ? "⚠️ Editing Main Directly" : "👀 Viewing Main Branch")
@@ -247,23 +321,31 @@ const ProjectEditor = () => {
                     </div>
 
                     <button
-                        onClick={handleSave}
+                        onClick={() => {
+                            if (viewingMember) {
+                                setViewingMember(null); // Back to my branch
+                            } else {
+                                handleSave();
+                            }
+                        }}
                         disabled={saving || (isEditingMain && projectData.ownerId !== currentUser?.uid)}
                         style={{
                             width: '100%', padding: '10px',
-                            backgroundColor: isEditingMain
-                                ? (projectData.ownerId === currentUser?.uid ? '#da3633' : '#30363D') // Red for Owner, Grey for Viewer
-                                : '#1F6FEB',
-                            color: isEditingMain && projectData.ownerId !== currentUser?.uid ? '#8B949E' : 'white',
+                            backgroundColor: (viewingMember || (isEditingMain && projectData.ownerId !== currentUser?.uid))
+                                ? '#30363D' // Grey for Read Only
+                                : (isEditingMain ? '#da3633' : '#1F6FEB'), // Red for Owner Main, Blue for My Branch
+                            color: (viewingMember || (isEditingMain && projectData.ownerId !== currentUser?.uid)) ? '#8B949E' : 'white',
                             border: 'none', borderRadius: '6px',
-                            cursor: (isEditingMain && projectData.ownerId !== currentUser?.uid) ? 'not-allowed' : 'pointer',
+                            cursor: (viewingMember || (isEditingMain && projectData.ownerId !== currentUser?.uid)) ? 'pointer' : (saving ? 'wait' : 'pointer'), // Pointer for "Back to my branch"
                             fontWeight: 'bold'
                         }}
                     >
                         {saving ? 'Saving...' : (
-                            isEditingMain
-                                ? (projectData.ownerId === currentUser?.uid ? '⚠️ Update Main Branch' : 'Read Only Mode')
-                                : 'Save Code'
+                            viewingMember ? '⬅ Back to My Branch' : (
+                                isEditingMain
+                                    ? (projectData.ownerId === currentUser?.uid ? '⚠️ Update Main Branch' : 'Read Only Mode')
+                                    : 'Save Code'
+                            )
                         )}
                     </button>
                 </div>
@@ -277,7 +359,11 @@ const ProjectEditor = () => {
                         {isEditingMain ? (
                             projectData.ownerId === currentUser?.uid ? "⚠️ You are editing the MAIN BRANCH directly." : "👀 You are viewing the MAIN BRANCH (Read-Only)."
                         ) : (
-                            <>Branch: <span style={{ color: '#58A6FF' }}>{currentUser?.displayName || "Me"}</span></>
+                            viewingMember ? (
+                                <span style={{ color: '#8B949E' }}>👀 Viewing <span style={{ color: '#58A6FF' }}>{viewingMember.name}'s</span> Branch (Read-Only)</span>
+                            ) : (
+                                <>Branch: <span style={{ color: '#58A6FF' }}>{currentUser?.displayName || "Me"}</span></>
+                            )
                         )}
                         {!isEditingMain && isMerged && (
                             <span style={{ marginLeft: '10px', backgroundColor: '#238636', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', border: '1px solid rgba(255,255,255,0.2)' }}>
@@ -305,13 +391,14 @@ const ProjectEditor = () => {
                     theme="vs-dark"
                     language={projectData.language === 'javascript' ? 'javascript' : 'python'}
                     value={code}
-                    onChange={(value) => setCode(value || "")}
+                    onChange={(value) => !viewingMember && setCode(value || "")} // Prevent editing if viewing someone else
                     options={{
                         minimap: { enabled: false },
                         fontSize: 14,
                         scrollBeyondLastLine: false,
                         automaticLayout: true,
-                        readOnly: isEditingMain && projectData.ownerId !== currentUser?.uid // ReadOnly for members viewing Main
+                        // ReadOnly if: Viewing Member OR (Viewing Main AND Not Owner)
+                        readOnly: !!viewingMember || (isEditingMain && projectData.ownerId !== currentUser?.uid)
                     }}
                 />
             </div>

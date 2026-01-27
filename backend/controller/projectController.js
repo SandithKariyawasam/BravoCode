@@ -371,6 +371,30 @@ const mergeBranch = async (req, res) => {
     }
 };
 
+const deleteProject = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { ownerId } = req.body;
+
+        const projectRef = db.collection('projects').doc(projectId);
+        const projectDoc = await projectRef.get();
+
+        if (!projectDoc.exists) return res.status(404).json({ error: "Project not found" });
+        if (projectDoc.data().ownerId !== ownerId) {
+            return res.status(403).json({ error: "Only the owner can delete the project" });
+        }
+
+        await projectRef.delete();
+        // Note: Subcollections (branches, requests) remain in Firestore but are orphaned.
+        // For a production app, use refined recursive delete.
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Error deleting project:", error);
+        res.status(500).json({ error: "Failed to delete project" });
+    }
+};
+
 module.exports = {
     createProject,
     getProjects,
@@ -382,5 +406,6 @@ module.exports = {
     removeMember,
     getUserBranch,
     saveUserBranch,
-    mergeBranch
+    mergeBranch,
+    deleteProject
 };

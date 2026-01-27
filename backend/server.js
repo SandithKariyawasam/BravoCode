@@ -30,7 +30,8 @@ const {
     removeMember,
     getUserBranch,
     saveUserBranch,
-    mergeBranch
+    mergeBranch,
+    deleteProject
 } = require('./controller/projectController');
 
 app.post('/api/run', executeCode);
@@ -38,6 +39,7 @@ app.post('/api/projects', createProject);
 app.get('/api/projects/:userId', getProjects);
 app.get('/api/project/:projectId', getProjectById);
 app.put('/api/project/:projectId', updateProject); // This can stay for "updating details" or similar, but code save uses saveUserBranch now
+app.delete('/api/project/:projectId', deleteProject);
 
 // Join Requests
 app.post('/api/project/:projectId/join', requestJoinProject);
