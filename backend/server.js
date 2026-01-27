@@ -27,20 +27,28 @@ const {
     requestJoinProject,
     respondToJoinRequest,
     getProjectRequests,
-    removeMember
+    removeMember,
+    getUserBranch,
+    saveUserBranch,
+    mergeBranch
 } = require('./controller/projectController');
 
 app.post('/api/run', executeCode);
 app.post('/api/projects', createProject);
 app.get('/api/projects/:userId', getProjects);
 app.get('/api/project/:projectId', getProjectById);
-app.put('/api/project/:projectId', updateProject);
+app.put('/api/project/:projectId', updateProject); // This can stay for "updating details" or similar, but code save uses saveUserBranch now
 
 // Join Requests
 app.post('/api/project/:projectId/join', requestJoinProject);
 app.post('/api/project/:projectId/request', respondToJoinRequest);
 app.get('/api/project/:projectId/requests', getProjectRequests);
 app.post('/api/project/:projectId/remove', removeMember);
+
+// Branching
+app.get('/api/project/:projectId/branch/:userId', getUserBranch);
+app.post('/api/project/:projectId/branch', saveUserBranch);
+app.post('/api/project/:projectId/merge', mergeBranch);
 
 app.use((err, req, res, next) => {
     console.error(err.stack);

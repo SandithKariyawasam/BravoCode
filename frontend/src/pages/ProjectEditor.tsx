@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { useAuth } from '../context/AuthContext';
+import MergeModal from '../components/MergeModal';
 
 const ProjectEditor = () => {
     const { projectId } = useParams();
@@ -14,18 +15,32 @@ const ProjectEditor = () => {
     const [output, setOutput] = useState("");
     const [isRunning, setIsRunning] = useState(false);
 
+    // Merge State
+    const [isMergeOpen, setIsMergeOpen] = useState(false);
+    const [mergeTarget, setMergeTarget] = useState<{ id: string, name: string } | null>(null);
+
 
     useEffect(() => {
-        if (!projectId) return;
+        if (!projectId || !currentUser) return;
 
-        const fetchProject = async () => {
+        const fetchData = async () => {
             try {
+                // 1. Get Project Details
                 const res = await fetch(`http://localhost:5000/api/project/${projectId}`);
                 if (!res.ok) throw new Error("Project not found");
-
                 const data = await res.json();
                 setProjectData(data);
-                setCode(data.code || "");
+
+                // 2. Get MY Branch Code
+                const branchRes = await fetch(`http://localhost:5000/api/project/${projectId}/branch/${currentUser.uid}`);
+                if (branchRes.ok) {
+                    const branchData = await branchRes.json();
+                    setCode(branchData.code); // Load MY branch code
+                } else {
+                    // Fallback to Main if branch fetch fails (shouldn't happen due to auto-create)
+                    setCode(data.code || "");
+                }
+
             } catch (err) {
                 console.error("Failed to load project", err);
                 alert("Project not found!");
@@ -33,22 +48,23 @@ const ProjectEditor = () => {
             }
         };
 
-        fetchProject();
-    }, [projectId, navigate]);
+        fetchData();
+    }, [projectId, navigate, currentUser]);
 
     const handleSave = async () => {
-        if (!projectId) return;
+        if (!projectId || !currentUser) return;
         setSaving(true);
         try {
-            const response = await fetch(`http://localhost:5000/api/project/${projectId}`, {
-                method: 'PUT',
+            const response = await fetch(`http://localhost:5000/api/project/${projectId}/branch`, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code })
+                body: JSON.stringify({ userId: currentUser.uid, code })
             });
 
             if (!response.ok) throw new Error("Failed to save");
 
-            alert("Saved successfully!");
+            // alert("Saved to your branch!"); 
+            // Silent save or toast is better, but alert is fine for now.
         } catch (err) {
             console.error("Failed to save", err);
             alert("Failed to save code.");
@@ -147,6 +163,21 @@ const ProjectEditor = () => {
                                     </span>
                                     {member.uid === projectData.ownerId && <span>👑</span>}
 
+                                    {/* Merge Button: Only for Owner, on other members */}
+                                    {currentUser && currentUser.uid === projectData.ownerId && member.uid !== currentUser.uid && (
+                                        <button
+                                            onClick={() => { setMergeTarget({ id: member.uid, name: member.name }); setIsMergeOpen(true); }}
+                                            style={{
+                                                marginLeft: '5px', background: 'none', border: 'none',
+                                                color: '#2ea043', cursor: 'pointer', fontSize: '1.2rem', padding: '0 5px',
+                                                lineHeight: '1'
+                                            }}
+                                            title="Merge Changes"
+                                        >
+                                            ⛙
+                                        </button>
+                                    )}
+
                                     {/* Remove Button: Only show if I am owner AND this is not me */}
                                     {currentUser && currentUser.uid === projectData.ownerId && member.uid !== currentUser.uid && (
                                         <button
@@ -229,6 +260,26 @@ const ProjectEditor = () => {
                     {output || "Ready..."}
                 </div>
             </div>
+
+            {/* Merge Modal */}
+            {mergeTarget && currentUser && (
+                <MergeModal
+                    isOpen={isMergeOpen}
+                    onClose={() => setIsMergeOpen(false)}
+                    projectId={projectId!}
+                    ownerId={currentUser.uid}
+                    memberId={mergeTarget.id}
+                    memberName={mergeTarget.name}
+                    language={projectData.language}
+                    onMergeComplete={() => {
+                        // Reload main code?
+                        // Actually, if we merged, our (owner) branch IS updated to main.
+                        // So re-fetching local branch is correct.
+                        // Let's force a reload of everything
+                        window.location.reload();
+                    }}
+                />
+            )}
 
         </div>
     );

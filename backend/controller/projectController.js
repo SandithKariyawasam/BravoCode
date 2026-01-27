@@ -8,6 +8,8 @@ const createProject = async (req, res) => {
             return res.status(400).json({ error: "Title and Owner ID are required" });
         }
 
+        const initialCode = "// Start coding here...";
+
         const newProject = {
             title,
             description: description || "",
@@ -15,7 +17,7 @@ const createProject = async (req, res) => {
             ownerId,
             members: [ownerId],
             membersDetails: [{ uid: ownerId, name: ownerName || "Owner" }],
-            code: "// Start coding here...",
+            code: initialCode, // Main Branch
             version: 1,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             lastSaved: admin.firestore.FieldValue.serverTimestamp()
@@ -23,7 +25,13 @@ const createProject = async (req, res) => {
 
         const docRef = await db.collection('projects').add(newProject);
 
-        res.status(201).json({ id: docRef.id, ...newProject, createdAt: new Date() }); // Send back mock date or fetch it if crucial
+        // Create Owner Branch
+        await docRef.collection('branches').doc(ownerId).set({
+            code: initialCode,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.status(201).json({ id: docRef.id, ...newProject, createdAt: new Date() });
     } catch (error) {
         console.error("Error creating project:", error);
         res.status(500).json({ error: "Failed to create project" });
@@ -58,8 +66,6 @@ const getProjects = async (req, res) => {
     }
 };
 
-// ... existing imports ...
-
 const getProjectById = async (req, res) => {
     try {
         const { projectId } = req.params;
@@ -87,9 +93,6 @@ const getProjectById = async (req, res) => {
                     membersDetails.push({ uid, name: "Unknown User" });
                 }
             }
-            // Optional: Save back to DB to avoid future lookups
-            // await docRef.update({ membersDetails }); 
-            // We'll just return it for now to be safe and fast on read-repair
             projectData.membersDetails = membersDetails;
         }
 
@@ -117,8 +120,6 @@ const updateProject = async (req, res) => {
         res.status(500).json({ error: "Failed to update project" });
     }
 };
-
-// ... existing imports ...
 
 const requestJoinProject = async (req, res) => {
     try {
@@ -191,6 +192,14 @@ const respondToJoinRequest = async (req, res) => {
                 membersDetails: admin.firestore.FieldValue.arrayUnion({ uid: userId, name: displayName })
             });
             await requestRef.update({ status: 'accepted' });
+
+            // Initialize Member Branch with CURRENT Main Code
+            const currentCode = projectDoc.data().code || "";
+            await projectRef.collection('branches').doc(userId).set({
+                code: currentCode,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
         } else {
             await requestRef.update({ status: 'rejected' });
         }
@@ -237,9 +246,6 @@ const removeMember = async (req, res) => {
             return res.status(400).json({ error: "Cannot remove owner" });
         }
 
-        // Remove from members array
-        // Remove from membersDetails array
-
         const currentDetails = projectDoc.data().membersDetails || [];
         const newDetails = currentDetails.filter(m => m.uid !== memberId);
 
@@ -259,6 +265,83 @@ const removeMember = async (req, res) => {
     }
 }
 
+const getUserBranch = async (req, res) => {
+    try {
+        const { projectId, userId } = req.params;
+        const projectRef = db.collection('projects').doc(projectId);
+        const branchRef = projectRef.collection('branches').doc(userId);
+
+        const branchDoc = await branchRef.get();
+
+        if (branchDoc.exists) {
+            return res.json({ code: branchDoc.data().code });
+        }
+
+        // If no branch exists, fallback to Main Project code (and create branch)
+        const projectDoc = await projectRef.get();
+        if (!projectDoc.exists) return res.status(404).json({ error: "Project not found" });
+
+        const mainCode = projectDoc.data().code || "";
+
+        // Auto-create branch
+        await branchRef.set({
+            code: mainCode,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ code: mainCode });
+
+    } catch (e) {
+        console.error("Branch fetch error:", e);
+        res.status(500).json({ error: "Failed to fetch branch" });
+    }
+};
+
+const saveUserBranch = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { userId, code } = req.body;
+
+        await db.collection('projects').doc(projectId).collection('branches').doc(userId).set({
+            code,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: "Failed to save branch" });
+    }
+};
+
+const mergeBranch = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { ownerId, mergedCode } = req.body; // mergedCode is the resolved code
+
+        const projectRef = db.collection('projects').doc(projectId);
+        const projectDoc = await projectRef.get();
+
+        if (projectDoc.data().ownerId !== ownerId) return res.status(403).json({ error: "Not authorized" });
+
+        // Update Main Branch
+        await projectRef.update({
+            code: mergedCode,
+            lastSaved: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Update Owner's branch too to match Main
+        await projectRef.collection('branches').doc(ownerId).update({
+            code: mergedCode,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.json({ success: true });
+
+    } catch (e) {
+        res.status(500).json({ error: "Merge failed" });
+    }
+};
+
 module.exports = {
     createProject,
     getProjects,
@@ -267,5 +350,8 @@ module.exports = {
     requestJoinProject,
     respondToJoinRequest,
     getProjectRequests,
-    removeMember
+    removeMember,
+    getUserBranch,
+    saveUserBranch,
+    mergeBranch
 };
