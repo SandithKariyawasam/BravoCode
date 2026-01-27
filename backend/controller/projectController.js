@@ -274,7 +274,20 @@ const getUserBranch = async (req, res) => {
         const branchDoc = await branchRef.get();
 
         if (branchDoc.exists) {
-            return res.json({ code: branchDoc.data().code });
+            const data = branchDoc.data();
+            let isMerged = false;
+
+            if (data.lastMergedAt && data.updatedAt) {
+                // Compare Firestore Timestamps directly
+                isMerged = data.lastMergedAt.toMillis() >= data.updatedAt.toMillis();
+            }
+
+            return res.json({
+                code: data.code,
+                isMerged,
+                updatedAt: data.updatedAt,
+                lastMergedAt: data.lastMergedAt
+            });
         }
 
         // If no branch exists, fallback to Main Project code (and create branch)
@@ -289,7 +302,7 @@ const getUserBranch = async (req, res) => {
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        res.json({ code: mainCode });
+        res.json({ code: mainCode, isMerged: true }); // Newly created branch matches main effectively
 
     } catch (e) {
         console.error("Branch fetch error:", e);
@@ -316,7 +329,7 @@ const saveUserBranch = async (req, res) => {
 const mergeBranch = async (req, res) => {
     try {
         const { projectId } = req.params;
-        const { ownerId, mergedCode } = req.body; // mergedCode is the resolved code
+        const { ownerId, mergedCode, targetMemberId } = req.body; // mergedCode is the resolved code
 
         const projectRef = db.collection('projects').doc(projectId);
         const projectDoc = await projectRef.get();
@@ -330,14 +343,30 @@ const mergeBranch = async (req, res) => {
         });
 
         // Update Owner's branch too to match Main
-        await projectRef.collection('branches').doc(ownerId).update({
+        // If owner is merging THEMSELVES (targetMemberId === ownerId), we must set lastMergedAt here in the same update
+        const ownerUpdateData = {
             code: mergedCode,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        };
+
+        if (targetMemberId === ownerId) {
+            ownerUpdateData.lastMergedAt = admin.firestore.FieldValue.serverTimestamp();
+        }
+
+        await projectRef.collection('branches').doc(ownerId).update(ownerUpdateData);
+
+        // If we merged a specific member's branch (and it's NOT the owner, or even if it is, we already handled it above, but let's be safe), mark it as merged
+        // Verify we aren't duplicating the update for owner
+        if (targetMemberId && targetMemberId !== ownerId) {
+            await projectRef.collection('branches').doc(targetMemberId).update({
+                lastMergedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        }
 
         res.json({ success: true });
 
     } catch (e) {
+        console.error("Merge error:", e);
         res.status(500).json({ error: "Merge failed" });
     }
 };

@@ -22,6 +22,9 @@ const ProjectEditor = () => {
     // Direct Main Edit State
     const [isEditingMain, setIsEditingMain] = useState(false);
 
+    // Merge Status
+    const [isMerged, setIsMerged] = useState(false);
+
 
     useEffect(() => {
         if (!projectId || !currentUser) return;
@@ -42,7 +45,11 @@ const ProjectEditor = () => {
                     const branchRes = await fetch(`http://localhost:5000/api/project/${projectId}/branch/${currentUser.uid}`);
                     if (branchRes.ok) {
                         const branchData = await branchRes.json();
+
                         setCode(branchData.code); // Load MY branch code
+
+                        // Use backend-provided status
+                        setIsMerged(!!branchData.isMerged);
                     } else {
                         // Fallback to Main if branch fetch fails (shouldn't happen due to auto-create)
                         setCode(data.code || "");
@@ -81,6 +88,7 @@ const ProjectEditor = () => {
                 });
                 if (!response.ok) throw new Error("Failed to save");
                 alert("Success! Saved to your personal branch.");
+                setIsMerged(false); // New changes, so not merged
             }
         } catch (err) {
             console.error("Failed to save", err);
@@ -179,6 +187,8 @@ const ProjectEditor = () => {
                                         {member.name || "Unknown"}
                                     </span>
                                     {member.uid === projectData.ownerId && <span>👑</span>}
+                                    {/* Show merged status for self if viewing list */}
+                                    {member.uid === currentUser?.uid && isMerged && <span title="Your branch is merged" style={{ fontSize: '0.8rem' }}>✅</span>}
 
                                     {/* Merge Button: Owner can merge anyone including self */}
                                     {currentUser && currentUser.uid === projectData.ownerId && (
@@ -268,6 +278,11 @@ const ProjectEditor = () => {
                             projectData.ownerId === currentUser?.uid ? "⚠️ You are editing the MAIN BRANCH directly." : "👀 You are viewing the MAIN BRANCH (Read-Only)."
                         ) : (
                             <>Branch: <span style={{ color: '#58A6FF' }}>{currentUser?.displayName || "Me"}</span></>
+                        )}
+                        {!isEditingMain && isMerged && (
+                            <span style={{ marginLeft: '10px', backgroundColor: '#238636', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                ✅ Merged
+                            </span>
                         )}
                     </div>
 

@@ -15,6 +15,7 @@ interface MergeModalProps {
 const MergeModal: React.FC<MergeModalProps> = ({ isOpen, onClose, projectId, ownerId, memberId, memberName, language, onMergeComplete }) => {
     const [mainCode, setMainCode] = useState("");
     const [memberCode, setMemberCode] = useState("");
+    const [isAlreadyMerged, setIsAlreadyMerged] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const [mergedCode, setMergedCode] = useState("");
@@ -39,9 +40,18 @@ const MergeModal: React.FC<MergeModalProps> = ({ isOpen, onClose, projectId, own
             const memberData = await memberRes.json();
             setMemberCode(memberData.code || "");
 
-            // Default: APPEND member code to the end of Main code
-            const appendedCode = (mainData.code || "") + "\n\n// --- Merged update from " + memberName + " ---\n\n" + (memberData.code || "");
-            setMergedCode(appendedCode);
+            // Check if already merged (backend flag)
+            const alreadyMerged = !!memberData.isMerged;
+            setIsAlreadyMerged(alreadyMerged);
+
+            if (alreadyMerged) {
+                // If merged, default to showing NO CHANGE (Main Code) to prevent accidental double-append
+                setMergedCode(mainData.code || "");
+            } else {
+                // Default: APPEND member code to the end of Main code
+                const appendedCode = (mainData.code || "") + "\n\n// --- Merged update from " + memberName + " ---\n\n" + (memberData.code || "");
+                setMergedCode(appendedCode);
+            }
 
         } catch (e) {
             console.error(e);
@@ -59,7 +69,7 @@ const MergeModal: React.FC<MergeModalProps> = ({ isOpen, onClose, projectId, own
             const res = await fetch(`http://localhost:5000/api/project/${projectId}/merge`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ownerId, mergedCode }) // We send the code from the "Modified" pane
+                body: JSON.stringify({ ownerId, mergedCode, targetMemberId: memberId }) // We send the code from the "Modified" pane
             });
 
             if (res.ok) {
@@ -83,7 +93,10 @@ const MergeModal: React.FC<MergeModalProps> = ({ isOpen, onClose, projectId, own
             backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', padding: '20px', zIndex: 1000
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', color: 'white' }}>
-                <h3 style={{ margin: 0 }}>Merge & Update Main Branch</h3>
+                <div>
+                    <h3 style={{ margin: 0 }}>Merge & Update Main Branch</h3>
+                    {isAlreadyMerged && <div style={{ color: '#238636', fontSize: '0.8rem', marginTop: '4px' }}>✅ This branch is already merged.</div>}
+                </div>
                 <div>
                     <span style={{ fontSize: '0.8rem', color: '#8B949E', marginRight: '15px' }}>
                         Start with:
