@@ -12,6 +12,7 @@ const Dashboard = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [searchId, setSearchId] = useState("");
   const [activeTab, setActiveTab] = useState("my"); // 'my' | 'shared'
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const navigate = useNavigate();
 
 
@@ -217,6 +218,16 @@ const Dashboard = () => {
             >
               + New Project
             </button>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              style={{
+                backgroundColor: '#21262D', color: '#C9D1D9', border: '1px solid #30363D',
+                padding: '10px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center'
+              }}
+              title="Settings"
+            >
+              ⚙️
+            </button>
           </div>
         </div>
 
@@ -247,6 +258,70 @@ const Dashboard = () => {
         onSubmit={handleCreateProject}
         loading={loading}
       />
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+        }}>
+          <div style={{ backgroundColor: '#161B22', padding: '2rem', borderRadius: '8px', width: '400px', border: '1px solid #30363D' }}>
+            <h2 style={{ color: '#C9D1D9', marginTop: 0 }}>Settings</h2>
+
+            <div style={{ marginTop: '20px', borderTop: '1px solid #30363D', paddingTop: '20px' }}>
+              <h4 style={{ color: '#da3633', margin: '0 0 10px 0' }}>Danger Zone</h4>
+              <button
+                onClick={async () => {
+                  if (!currentUser) return;
+                  const confirmation = prompt("To delete your account, type 'DELETE' below. This cannot be undone.");
+                  if (confirmation !== 'DELETE') return;
+
+                  try {
+                    const res = await fetch(`http://localhost:5000/api/user/${currentUser.uid}`, {
+                      method: 'DELETE',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ requesterId: currentUser.uid })
+                    });
+
+                    if (res.ok) {
+                      alert("Account deleted.");
+                      // Sign out and redirect
+                      // Note: in valid auth flow, verify connection, but here we force logout
+                      navigate('/');
+                      window.location.reload();
+                    } else {
+                      alert("Failed to delete account");
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    alert("Error deleting account");
+                  }
+                }}
+                style={{
+                  width: '100%', padding: '10px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid #da3633', borderRadius: '6px',
+                  color: '#da3633', cursor: 'pointer', fontWeight: 'bold'
+                }}
+              >
+                Delete My Account
+              </button>
+            </div>
+
+            <button
+              onClick={() => setIsSettingsOpen(false)}
+              style={{
+                marginTop: '20px', width: '100%', padding: '10px',
+                backgroundColor: '#21262D', color: '#C9D1D9',
+                border: '1px solid #30363D', borderRadius: '6px', cursor: 'pointer'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

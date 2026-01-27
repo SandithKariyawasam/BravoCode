@@ -34,12 +34,16 @@ const {
     deleteProject
 } = require('./controller/projectController');
 
+const { deleteAccount } = require('./controller/userController');
+
 app.post('/api/run', executeCode);
 app.post('/api/projects', createProject);
 app.get('/api/projects/:userId', getProjects);
 app.get('/api/project/:projectId', getProjectById);
 app.put('/api/project/:projectId', updateProject); // This can stay for "updating details" or similar, but code save uses saveUserBranch now
 app.delete('/api/project/:projectId', deleteProject);
+
+app.delete('/api/user/:userId', deleteAccount);
 
 // Join Requests
 app.post('/api/project/:projectId/join', requestJoinProject);
