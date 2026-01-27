@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import MergeModal from '../components/MergeModal';
 
 const ProjectEditor = () => {
@@ -9,6 +10,7 @@ const ProjectEditor = () => {
     const navigate = useNavigate();
 
     const { currentUser } = useAuth()!; // Need current user to check ownership
+    const { colors, theme } = useTheme();
     const [code, setCode] = useState("// Loading...");
     const [projectData, setProjectData] = useState<any>(null);
     const [saving, setSaving] = useState(false);
@@ -198,31 +200,31 @@ const ProjectEditor = () => {
     if (!projectData) return <div style={{ color: 'white', padding: '20px' }}>Loading Project...</div>;
 
     return (
-        <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0D1117', color: '#C9D1D9' }}>
+        <div style={{ display: 'flex', height: '100vh', backgroundColor: colors.background, color: colors.text }}>
 
             {/* LEFT SIDEBAR: Project Info */}
-            <div style={{ width: '250px', backgroundColor: '#161B22', borderRight: '1px solid #30363D', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ width: '250px', backgroundColor: colors.sidebarBg, borderRight: `1px solid ${colors.border}`, padding: '1rem', display: 'flex', flexDirection: 'column' }}>
                 <button
                     onClick={() => navigate('/dashboard')}
-                    style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: '#58A6FF', cursor: 'pointer', textAlign: 'left' }}
+                    style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: colors.buttonPrimary, cursor: 'pointer', textAlign: 'left' }}
                 >
                     ← Back to Dashboard
                 </button>
 
-                <h3 style={{ margin: '0 0 10px 0', color: '#C9D1D9' }}>{projectData.title}</h3>
-                <p style={{ fontSize: '0.8rem', color: '#8B949E' }}>{projectData.language}</p>
+                <h3 style={{ margin: '0 0 10px 0', color: colors.text }}>{projectData.title}</h3>
+                <p style={{ fontSize: '0.8rem', color: colors.textSecondary }}>{projectData.language}</p>
 
                 <div style={{ marginTop: '20px', flex: 1, overflowY: 'auto' }}>
-                    <h4 style={{ color: '#C9D1D9', borderBottom: '1px solid #30363D', paddingBottom: '5px', marginBottom: '10px' }}>Members</h4>
+                    <h4 style={{ color: colors.text, borderBottom: `1px solid ${colors.border}`, paddingBottom: '5px', marginBottom: '10px' }}>Members</h4>
 
                     {projectData.membersDetails && projectData.membersDetails.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                             {projectData.membersDetails.map((member: any) => (
                                 <div key={member.uid} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
-                                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#30363D', display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#C9D1D9', fontSize: '0.7rem' }}>
+                                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: colors.border, display: 'flex', justifyContent: 'center', alignItems: 'center', color: colors.text, fontSize: '0.7rem' }}>
                                         {member.name ? member.name.charAt(0).toUpperCase() : '?'}
                                     </div>
-                                    <span style={{ color: member.uid === projectData.ownerId ? '#58A6FF' : '#C9D1D9' }}>
+                                    <span style={{ color: member.uid === projectData.ownerId ? colors.buttonPrimary : colors.text }}>
                                         {member.name || "Unknown"}
                                     </span>
                                     {member.uid === projectData.ownerId && <span>👑</span>}
@@ -268,7 +270,7 @@ const ProjectEditor = () => {
                                             }}
                                             style={{
                                                 marginLeft: 'auto', background: 'none', border: 'none',
-                                                color: viewingMember?.id === member.uid ? '#58A6FF' : '#8B949E', // Highlight if active
+                                                color: viewingMember?.id === member.uid ? colors.buttonPrimary : colors.textSecondary, // Highlight if active
                                                 cursor: 'pointer', fontSize: '1rem', padding: '0 5px'
                                             }}
                                             title={`View ${member.name}'s Code`}
@@ -281,7 +283,7 @@ const ProjectEditor = () => {
                         </div>
                     ) : (
                         /* Fallback for old projects */
-                        <p style={{ color: '#8B949E', fontSize: '0.8rem' }}>
+                        <p style={{ color: colors.textSecondary, fontSize: '0.8rem' }}>
                             {projectData.members ? `${projectData.members.length} member(s)` : 'No members'}
                         </p>
                     )}
@@ -295,16 +297,16 @@ const ProjectEditor = () => {
                             style={{
                                 width: '100%', marginBottom: '15px', padding: '8px',
                                 background: 'transparent',
-                                border: '1px solid #da3633', borderRadius: '6px',
-                                color: '#da3633', cursor: 'pointer', fontSize: '0.9rem'
+                                border: `1px solid ${colors.buttonDanger}`, borderRadius: '6px',
+                                color: colors.buttonDanger, cursor: 'pointer', fontSize: '0.9rem'
                             }}
                         >
                             🗑️ Delete Project
                         </button>
                     )}
                     {/* Direct Edit/View Toggle (Available to All) */}
-                    <div style={{ marginBottom: '10px', padding: '10px', border: '1px solid #30363D', borderRadius: '6px' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.8rem', cursor: 'pointer', color: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#da3633' : '#58A6FF') : '#8B949E' }}>
+                    <div style={{ marginBottom: '10px', padding: '10px', border: `1px solid ${colors.border}`, borderRadius: '6px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.8rem', cursor: 'pointer', color: isEditingMain ? (projectData.ownerId === currentUser?.uid ? colors.buttonDanger : colors.buttonPrimary) : colors.textSecondary }}>
                             <input
                                 type="checkbox"
                                 checked={isEditingMain}
@@ -332,9 +334,9 @@ const ProjectEditor = () => {
                         style={{
                             width: '100%', padding: '10px',
                             backgroundColor: (viewingMember || (isEditingMain && projectData.ownerId !== currentUser?.uid))
-                                ? '#30363D' // Grey for Read Only
-                                : (isEditingMain ? '#da3633' : '#1F6FEB'), // Red for Owner Main, Blue for My Branch
-                            color: (viewingMember || (isEditingMain && projectData.ownerId !== currentUser?.uid)) ? '#8B949E' : 'white',
+                                ? colors.border // Grey for Read Only
+                                : (isEditingMain ? colors.buttonDanger : colors.buttonPrimary), // Red for Owner Main, Blue for My Branch
+                            color: (viewingMember || (isEditingMain && projectData.ownerId !== currentUser?.uid)) ? colors.textSecondary : 'white',
                             border: 'none', borderRadius: '6px',
                             cursor: (viewingMember || (isEditingMain && projectData.ownerId !== currentUser?.uid)) ? 'pointer' : (saving ? 'wait' : 'pointer'), // Pointer for "Back to my branch"
                             fontWeight: 'bold'
@@ -354,15 +356,15 @@ const ProjectEditor = () => {
             {/* CENTER: Monaco Editor */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 {/* Editor Toolbar */}
-                <div style={{ height: '40px', backgroundColor: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#3e1515' : '#0D1117') : '#0D1117', borderBottom: '1px solid #30363D', display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between' }}>
-                    <div style={{ color: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#ff7b72' : '#58A6FF') : '#8B949E', fontSize: '0.9rem', fontStyle: 'italic', fontWeight: isEditingMain ? 'bold' : 'normal' }}>
+                <div style={{ height: '40px', backgroundColor: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#3e1515' : colors.background) : colors.background, borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between' }}>
+                    <div style={{ color: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#ff7b72' : colors.buttonPrimary) : colors.textSecondary, fontSize: '0.9rem', fontStyle: 'italic', fontWeight: isEditingMain ? 'bold' : 'normal' }}>
                         {isEditingMain ? (
                             projectData.ownerId === currentUser?.uid ? "⚠️ You are editing the MAIN BRANCH directly." : "👀 You are viewing the MAIN BRANCH (Read-Only)."
                         ) : (
                             viewingMember ? (
-                                <span style={{ color: '#8B949E' }}>👀 Viewing <span style={{ color: '#58A6FF' }}>{viewingMember.name}'s</span> Branch (Read-Only)</span>
+                                <span style={{ color: colors.textSecondary }}>👀 Viewing <span style={{ color: colors.buttonPrimary }}>{viewingMember.name}'s</span> Branch (Read-Only)</span>
                             ) : (
-                                <>Branch: <span style={{ color: '#58A6FF' }}>{currentUser?.displayName || "Me"}</span></>
+                                <>Branch: <span style={{ color: colors.buttonPrimary }}>{currentUser?.displayName || "Me"}</span></>
                             )
                         )}
                         {!isEditingMain && isMerged && (
@@ -388,7 +390,7 @@ const ProjectEditor = () => {
 
                 <Editor
                     height="100%"
-                    theme="vs-dark"
+                    theme={theme === 'dark' ? "vs-dark" : "light"}
                     language={projectData.language === 'javascript' ? 'javascript' : 'python'}
                     value={code}
                     onChange={(value) => !viewingMember && setCode(value || "")} // Prevent editing if viewing someone else
@@ -404,8 +406,8 @@ const ProjectEditor = () => {
             </div>
 
             {/* RIGHT: Terminal (Placeholder) */}
-            <div style={{ width: '30%', backgroundColor: '#010409', borderLeft: '1px solid #30363D', padding: '1rem' }}>
-                <p style={{ fontFamily: 'monospace', color: '#8B949E', fontSize: '0.9rem', borderBottom: '1px solid #30363D', paddingBottom: '5px' }}>
+            <div style={{ width: '30%', backgroundColor: '#010409', borderLeft: `1px solid ${colors.border}`, padding: '1rem' }}>
+                <p style={{ fontFamily: 'monospace', color: '#8B949E', fontSize: '0.9rem', borderBottom: `1px solid ${colors.border}`, paddingBottom: '5px' }}>
                     TERMINAL / OUTPUT
                 </p>
                 <div style={{ fontFamily: 'monospace', color: '#C9D1D9', marginTop: '10px', whiteSpace: 'pre-wrap', overflowX: 'auto' }}>
