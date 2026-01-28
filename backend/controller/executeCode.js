@@ -84,7 +84,7 @@ const executeCode = (req, res) => {
         return;
     }
 
-    if (language === 'c') {
+    if (language === 'c' || language === 'cpp') {
         const jobId = Date.now();
         const tempDir = path.join(__dirname, '../temp');
         const jobDir = path.join(tempDir, `job_${jobId}`);
@@ -93,31 +93,32 @@ const executeCode = (req, res) => {
             fs.mkdirSync(jobDir);
         }
 
-        const filename = 'main.c';
+        const extension = language === 'cpp' ? 'cpp' : 'c';
+        const filename = `main.${extension}`;
         const filePath = path.join(jobDir, filename);
-        // Output file - Windows needs .exe, Linux doesn't, but gcc handles it. 
-        // We'll use absolute path for output to be safe.
+
+        // Output file
         const outputName = process.platform === 'win32' ? 'main.exe' : 'main';
-        const outputPath = path.join(jobDir, outputName);
 
         fs.writeFileSync(filePath, code);
 
-        // Command: gcc main.c -o main && ./main
+        // Command: gcc/g++ filename -o output && output
+        const compiler = language === 'cpp' ? 'g++' : 'gcc';
         const runCmd = process.platform === 'win32' ? outputName : `./${outputName}`;
-        const command = `cd "${jobDir}" && gcc ${filename} -o ${outputName} && ${runCmd}`;
+        const command = `cd "${jobDir}" && ${compiler} ${filename} -o ${outputName} && ${runCmd}`;
 
         exec(command, { timeout: 10000 }, (error, stdout, stderr) => {
             // Cleanup
             try {
                 fs.rmSync(jobDir, { recursive: true, force: true });
             } catch (err) {
-                console.error("Failed to cleanup C job", err);
+                console.error(`Failed to cleanup ${language} job`, err);
             }
 
             if (error) {
                 const errorStr = (stderr || error.message || "").toString();
-                if (errorStr.includes("'gcc' is not recognized") || errorStr.includes("command not found")) {
-                    return res.json({ output: "System Error: GCC is not installed or not in PATH.\nPlease install MinGW (Windows) or GCC (Linux)." });
+                if (errorStr.includes("'gcc' is not recognized") || errorStr.includes("'g++' is not recognized") || errorStr.includes("command not found")) {
+                    return res.json({ output: `System Error: ${compiler} is not installed or not in PATH.\nPlease install MinGW (Windows) or GCC (Linux).` });
                 }
                 if (error.killed) return res.json({ output: "Error: Script timed out." });
                 return res.json({ output: stderr || error.message });

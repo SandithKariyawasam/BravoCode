@@ -26,6 +26,13 @@ int main() {
     printf("Hello from C!\\n");
     return 0;
 }`;
+        } else if (language === 'cpp') {
+            initialCode = `#include <iostream>
+
+int main() {
+    std::cout << "Hello from C++!" << std::endl;
+    return 0;
+}`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }
