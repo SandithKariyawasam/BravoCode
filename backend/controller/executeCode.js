@@ -44,12 +44,43 @@ const executeCode = (req, res) => {
             }
 
             if (error) {
+                const errorStr = (stderr || error.message || "").toString();
+                if (errorStr.includes("'javac' is not recognized") || errorStr.includes("'java' is not recognized") || errorStr.includes("command not found")) {
+                    return res.json({ output: "System Error: Java JDK is not installed or not in PATH.\nPlease install JDK." });
+                }
+
                 if (error.killed) return res.json({ output: "Error: Script timed out." });
                 return res.json({ output: stderr || error.message });
             }
             res.json({ output: stdout || stderr });
         });
 
+        return;
+    }
+
+    if (language === 'r') {
+        const jobId = Date.now();
+        const filename = `job_${jobId}.r`;
+        const filePath = path.join(tempDir, filename);
+
+        fs.writeFileSync(filePath, code);
+
+        // Command: Rscript filename
+        const command = `Rscript "${filePath}"`;
+
+        exec(command, { timeout: 10000 }, (error, stdout, stderr) => {
+            try {
+                fs.unlinkSync(filePath);
+            } catch (err) {
+                console.error("Failed to delete temp file", err);
+            }
+
+            if (error) {
+                if (error.killed) return res.json({ output: "Error: Script timed out." });
+                return res.json({ output: stderr || error.message });
+            }
+            res.json({ output: stdout || stderr });
+        });
         return;
     }
 
@@ -72,6 +103,15 @@ const executeCode = (req, res) => {
         }
 
         if (error) {
+            // Check for common "Command not found" codes/messages
+            const errorStr = (stderr || error.message || "").toString();
+            if (errorStr.includes("'Rscript' is not recognized") || errorStr.includes("command not found")) {
+                return res.json({ output: "System Error: R is not installed or 'Rscript' is not in the system PATH.\nPlease install R from https://cran.r-project.org/" });
+            }
+            if (errorStr.includes("'javac' is not recognized") || errorStr.includes("'java' is not recognized")) {
+                return res.json({ output: "System Error: Java JDK is not installed or 'javac' is not in the system PATH.\nPlease install JDK from https://www.oracle.com/java/technologies/downloads/" });
+            }
+
             if (error.killed) return res.json({ output: "Error: Script timed out." });
             return res.json({ output: stderr || error.message });
         }
