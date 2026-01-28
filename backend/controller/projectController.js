@@ -47,6 +47,10 @@ class Program {
         Console.WriteLine("Hello from C#!");
     }
 }`;
+        } else if (language === 'kotlin') {
+            initialCode = `fun main() {
+    println("Hello from Kotlin!")
+}`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }

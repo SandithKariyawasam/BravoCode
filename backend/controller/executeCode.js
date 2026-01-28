@@ -211,6 +211,46 @@ const executeCode = (req, res) => {
         return;
     }
 
+    if (language === 'kotlin') {
+        const jobId = Date.now();
+        const tempDir = path.join(__dirname, '../temp');
+        const jobDir = path.join(tempDir, `job_${jobId}`);
+
+        if (!fs.existsSync(jobDir)) {
+            fs.mkdirSync(jobDir);
+        }
+
+        const filename = 'Main.kt';
+        const jarName = 'Main.jar';
+        const filePath = path.join(jobDir, filename);
+
+        fs.writeFileSync(filePath, code);
+
+        // Command: kotlinc Main.kt -include-runtime -d Main.jar && java -jar Main.jar
+        // We assume kotlinc is in PATH.
+        const command = `cd "${jobDir}" && kotlinc ${filename} -include-runtime -d ${jarName} && java -jar ${jarName}`;
+
+        exec(command, { timeout: 15000 }, (error, stdout, stderr) => {
+            // Cleanup
+            try {
+                fs.rmSync(jobDir, { recursive: true, force: true });
+            } catch (err) {
+                console.error("Failed to cleanup Kotlin job", err);
+            }
+
+            if (error) {
+                const errorStr = (stderr || error.message || "").toString();
+                if (errorStr.includes("'kotlinc' is not recognized") || errorStr.includes("command not found")) {
+                    return res.json({ output: "System Error: Kotlin Compiler (kotlinc) is not installed.\nPlease install Kotlin CLI compiler." });
+                }
+                if (error.killed) return res.json({ output: "Error: Script timed out." });
+                return res.json({ output: stderr || error.message });
+            }
+            res.json({ output: stdout || stderr });
+        });
+        return;
+    }
+
     // Default logic for Python/JS (Single file)
     const extension = language === 'python' ? 'py' : 'js';
     const filename = `job_${jobId}.${extension}`;

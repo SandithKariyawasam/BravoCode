@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { useAuth } from '../context/AuthContext';
@@ -394,13 +394,9 @@ const ProjectEditor = () => {
                     height="100%"
                     theme={theme === 'dark' ? "vs-dark" : "light"}
                     language={
-                        projectData.language === 'java' ? 'java' :
-                            (projectData.language === 'r' ? 'r' :
-                                (projectData.language === 'c' ? 'c' :
-                                    (projectData.language === 'cpp' ? 'cpp' :
-                                        (projectData.language === 'csharp' ? 'csharp' :
-                                            (projectData.language === 'typescript' ? 'typescript' :
-                                                (projectData.language === 'javascript' ? 'javascript' : 'python'))))))
+                        ['java', 'kotlin', 'r', 'c', 'cpp', 'csharp', 'typescript', 'javascript'].includes(projectData.language)
+                            ? projectData.language
+                            : 'python'
                     }
                     value={code}
                     onChange={(value) => !viewingMember && setCode(value || "")} // Prevent editing if viewing someone else
