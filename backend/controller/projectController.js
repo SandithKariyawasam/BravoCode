@@ -19,6 +19,13 @@ const createProject = async (req, res) => {
             initialCode = `print("Hello from Python!")`;
         } else if (language === 'r') {
             initialCode = `print("Hello from R!")`;
+        } else if (language === 'c') {
+            initialCode = `#include <stdio.h>
+
+int main() {
+    printf("Hello from C!\\n");
+    return 0;
+}`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }

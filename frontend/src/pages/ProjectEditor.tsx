@@ -396,7 +396,8 @@ const ProjectEditor = () => {
                     language={
                         projectData.language === 'java' ? 'java' :
                             (projectData.language === 'r' ? 'r' :
-                                (projectData.language === 'javascript' ? 'javascript' : 'python'))
+                                (projectData.language === 'c' ? 'c' :
+                                    (projectData.language === 'javascript' ? 'javascript' : 'python')))
                     }
                     value={code}
                     onChange={(value) => !viewingMember && setCode(value || "")} // Prevent editing if viewing someone else
