@@ -8,7 +8,18 @@ const createProject = async (req, res) => {
             return res.status(400).json({ error: "Title and Owner ID are required" });
         }
 
-        const initialCode = "// Start coding here...";
+        let initialCode = "// Start coding here...";
+        if (language === 'java') {
+            initialCode = `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello from Java!");
+    }
+}`;
+        } else if (language === 'python') {
+            initialCode = `print("Hello from Python!")`;
+        } else {
+            initialCode = `console.log("Hello from Javascript!");`;
+        }
 
         const newProject = {
             title,

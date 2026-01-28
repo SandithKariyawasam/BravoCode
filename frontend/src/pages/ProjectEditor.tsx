@@ -200,10 +200,10 @@ const ProjectEditor = () => {
     if (!projectData) return <div style={{ color: 'white', padding: '20px' }}>Loading Project...</div>;
 
     return (
-        <div style={{ display: 'flex', height: '100vh', backgroundColor: colors.background, color: colors.text }}>
+        <div className="editor-layout" style={{ backgroundColor: colors.background, color: colors.text }}>
 
             {/* LEFT SIDEBAR: Project Info */}
-            <div style={{ width: '250px', backgroundColor: colors.sidebarBg, borderRight: `1px solid ${colors.border}`, padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+            <div className="editor-sidebar-panel" style={{ backgroundColor: colors.sidebarBg, borderRight: `1px solid ${colors.border}` }}>
                 <button
                     onClick={() => navigate('/dashboard')}
                     style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: colors.buttonPrimary, cursor: 'pointer', textAlign: 'left' }}
@@ -227,7 +227,7 @@ const ProjectEditor = () => {
                                     <span style={{ color: member.uid === projectData.ownerId ? colors.buttonPrimary : colors.text }}>
                                         {member.name || "Unknown"}
                                     </span>
-                                    {member.uid === projectData.ownerId && <span>👑</span>}
+
                                     {/* Show merged status for self if viewing list */}
                                     {member.uid === currentUser?.uid && isMerged && <span title="Your branch is merged" style={{ fontSize: '0.8rem' }}>✅</span>}
 
@@ -246,6 +246,8 @@ const ProjectEditor = () => {
                                             ⛙
                                         </button>
                                     )}
+
+                                    {member.uid === projectData.ownerId && <span>🔵</span>}
 
                                     {/* Remove Button: Only show if I am owner AND this is not me */}
                                     {currentUser && currentUser.uid === projectData.ownerId && member.uid !== currentUser.uid && (
@@ -354,9 +356,9 @@ const ProjectEditor = () => {
             </div>
 
             {/* CENTER: Monaco Editor */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div className="editor-main-panel">
                 {/* Editor Toolbar */}
-                <div style={{ height: '40px', backgroundColor: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#3e1515' : colors.background) : colors.background, borderBottom: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between' }}>
+                <div className="editor-toolbar" style={{ backgroundColor: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#3e1515' : colors.background) : colors.background, borderBottom: `1px solid ${colors.border}` }}>
                     <div style={{ color: isEditingMain ? (projectData.ownerId === currentUser?.uid ? '#ff7b72' : colors.buttonPrimary) : colors.textSecondary, fontSize: '0.9rem', fontStyle: 'italic', fontWeight: isEditingMain ? 'bold' : 'normal' }}>
                         {isEditingMain ? (
                             projectData.ownerId === currentUser?.uid ? "⚠️ You are editing the MAIN BRANCH directly." : "👀 You are viewing the MAIN BRANCH (Read-Only)."
@@ -391,7 +393,7 @@ const ProjectEditor = () => {
                 <Editor
                     height="100%"
                     theme={theme === 'dark' ? "vs-dark" : "light"}
-                    language={projectData.language === 'javascript' ? 'javascript' : 'python'}
+                    language={projectData.language === 'java' ? 'java' : (projectData.language === 'javascript' ? 'javascript' : 'python')}
                     value={code}
                     onChange={(value) => !viewingMember && setCode(value || "")} // Prevent editing if viewing someone else
                     options={{
@@ -406,8 +408,8 @@ const ProjectEditor = () => {
             </div>
 
             {/* RIGHT: Terminal (Placeholder) */}
-            <div style={{ width: '30%', backgroundColor: '#010409', borderLeft: `1px solid ${colors.border}`, padding: '1rem' }}>
-                <p style={{ fontFamily: 'monospace', color: '#8B949E', fontSize: '0.9rem', borderBottom: `1px solid ${colors.border}`, paddingBottom: '5px' }}>
+            <div className="editor-terminal-panel" style={{ backgroundColor: '#010409', borderLeft: `1px solid ${colors.border}` }}>
+                <p style={{ fontFamily: 'monospace', color: '#8B949E', fontSize: '0.9rem', borderBottom: `1px solid ${colors.border}`, paddingBottom: '5px', margin: 0 }}>
                     TERMINAL / OUTPUT
                 </p>
                 <div style={{ fontFamily: 'monospace', color: '#C9D1D9', marginTop: '10px', whiteSpace: 'pre-wrap', overflowX: 'auto' }}>

@@ -10,49 +10,72 @@ const executeCode = (req, res) => {
         return res.status(400).json({ output: "Error: No code provided." });
     }
 
-    // 1. Create a unique filename to prevent conflicts
     const jobId = Date.now();
-    const filename = `job_${jobId}.${language === 'python' ? 'py' : 'js'}`;
-    const filePath = path.join(__dirname, '../temp', filename);
+    const tempDir = path.join(__dirname, '../temp');
 
-    // Ensure 'temp' folder exists
-    const tempFolder = path.join(__dirname, '../temp');
-    if (!fs.existsSync(tempFolder)) {
-        fs.mkdirSync(tempFolder);
+    // Ensure temp root exists
+    if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir);
     }
 
-    // 2. Write the code to the file
+    // Java specific logic
+    if (language === 'java') {
+        // Java requires class name 'Main' to match file 'Main.java'
+        // We create a unique subfolder to avoid class conflicts
+        const jobDir = path.join(tempDir, `job_${jobId}`);
+        fs.mkdirSync(jobDir);
+
+        const filePath = path.join(jobDir, 'Main.java');
+
+        // Write the code
+        fs.writeFileSync(filePath, code);
+
+        // Compile and Run
+        // 1. javac Main.java
+        // 2. java -cp . Main
+        const command = `javac "${filePath}" && java -cp "${jobDir}" Main`;
+
+        exec(command, { timeout: 10000 }, (error, stdout, stderr) => {
+            // Cleanup: Recursive delete of job directory
+            try {
+                fs.rmSync(jobDir, { recursive: true, force: true });
+            } catch (err) {
+                console.error("Failed to cleanup Java job", err);
+            }
+
+            if (error) {
+                if (error.killed) return res.json({ output: "Error: Script timed out." });
+                return res.json({ output: stderr || error.message });
+            }
+            res.json({ output: stdout || stderr });
+        });
+
+        return;
+    }
+
+    // Default logic for Python/JS (Single file)
+    const extension = language === 'python' ? 'py' : 'js';
+    const filename = `job_${jobId}.${extension}`;
+    const filePath = path.join(tempDir, filename);
+
     fs.writeFileSync(filePath, code);
 
-    // 3. Determine the command
-    // NOTE: Ensure you have 'python' or 'python3' installed for Python support
     const command = language === 'python'
-        ? `python ${filePath}`
-        : `node ${filePath}`;
+        ? `python "${filePath}"`
+        : `node "${filePath}"`;
 
-    // 4. Execute the file
     exec(command, { timeout: 5000 }, (error, stdout, stderr) => {
-
-        // Cleanup: Delete the file after running
         try {
             fs.unlinkSync(filePath);
         } catch (err) {
             console.error("Failed to delete temp file", err);
         }
 
-        // 5. Handle Results
         if (error) {
-            // If the code crashed or timed out
             if (error.killed) return res.json({ output: "Error: Script timed out." });
             return res.json({ output: stderr || error.message });
         }
-
-        if (stderr) {
-            return res.json({ output: stderr });
-        }
-
-        // Success!
-        res.json({ output: stdout });
+        res.json({ output: stdout || stderr });
     });
 };
 

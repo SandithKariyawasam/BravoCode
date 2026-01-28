@@ -83,7 +83,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, loading }: ModalProps) 
                 color: 'white', borderRadius: '6px'
               }}
             >
-              <option value="HTML">HTML</option>
+              <option value="javascript">Javascript</option>
               <option value="python">Python</option>
               <option value="java">Java</option>
             </select>

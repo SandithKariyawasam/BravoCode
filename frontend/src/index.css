@@ -24,3 +24,130 @@ body {
     background-color: #0D1117;
     /* Default dark bg to match theme start */
 }
+
+/* RESPONSIVE LAYOUT CLASSES */
+
+/* Sidebar Transitions */
+.sidebar-container {
+    width: 250px;
+    transition: width 0.3s ease;
+}
+
+.sidebar-label {
+    opacity: 1;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+}
+
+.sidebar-logo {
+    width: 220px;
+    transition: width 0.3s ease;
+}
+
+/* Mobile/Tablet: Collapse Sidebar */
+@media (max-width: 768px) {
+    .sidebar-container {
+        width: 70px;
+        /* Slim width for icons */
+        padding: 1rem 0.5rem !important;
+        /* Reduce padding */
+    }
+
+    .sidebar-label {
+        display: none;
+        /* Hide text labels */
+    }
+
+    .sidebar-logo {
+        width: 40px !important;
+        /* Shrink logo or hide */
+        object-fit: cover;
+        object-position: left;
+    }
+
+    /* Adjust button padding in sidebar */
+    .sidebar-btn {
+        text-align: center !important;
+        padding: 10px 5px !important;
+        display: flex !important;
+        justify-content: center !important;
+    }
+
+    .menu-header {
+        display: none;
+    }
+
+    .user-info {
+        display: none;
+        /* Hide user name on mobile, keep avatar? */
+    }
+
+    .user-avatar {
+        margin: 0 auto !important;
+    }
+}
+
+/* EDITOR LAYOUT */
+.editor-layout {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+.editor-sidebar-panel {
+    width: 250px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-main-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.editor-toolbar {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    justify-content: space-between;
+}
+
+.editor-terminal-panel {
+    width: 30%;
+    padding: 1rem;
+}
+
+/* Responsive Editor */
+@media (max-width: 1024px) {
+    .editor-layout {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .editor-sidebar-panel {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+        overflow-y: auto;
+        border-right: none !important;
+        border-bottom: 1px solid #30363D;
+    }
+
+    .editor-main-panel {
+        width: 100%;
+        height: 500px;
+        /* Fixed height for editor on mobile */
+        flex: none;
+    }
+
+    .editor-terminal-panel {
+        width: 100%;
+        height: 200px;
+        border-left: none !important;
+        border-top: 1px solid #30363D;
+    }
+}
