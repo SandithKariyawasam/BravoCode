@@ -33,6 +33,14 @@ int main() {
     std::cout << "Hello from C++!" << std::endl;
     return 0;
 }`;
+        } else if (language === 'csharp') {
+            initialCode = `using System;
+
+class Program {
+    static void Main() {
+        Console.WriteLine("Hello from C#!");
+    }
+}`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }

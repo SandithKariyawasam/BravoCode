@@ -128,6 +128,48 @@ const executeCode = (req, res) => {
         return;
     }
 
+    if (language === 'csharp') {
+        const jobId = Date.now();
+        const tempDir = path.join(__dirname, '../temp');
+        const jobDir = path.join(tempDir, `job_${jobId}`);
+
+        if (!fs.existsSync(jobDir)) {
+            fs.mkdirSync(jobDir);
+        }
+
+        const filename = 'Main.cs';
+        const filePath = path.join(jobDir, filename);
+        // Output file
+        const outputName = 'Main.exe';
+
+        fs.writeFileSync(filePath, code);
+
+        // Command: csc /out:Main.exe Main.cs && Main.exe
+        // We use full path for safety, but relative works if cwd is correct.
+        // Assuming 'csc' is in PATH.
+        const command = `cd "${jobDir}" && csc /nologo /out:${outputName} ${filename} && ${outputName}`;
+
+        exec(command, { timeout: 10000 }, (error, stdout, stderr) => {
+            // Cleanup
+            try {
+                fs.rmSync(jobDir, { recursive: true, force: true });
+            } catch (err) {
+                console.error("Failed to cleanup C# job", err);
+            }
+
+            if (error) {
+                const errorStr = (stderr || error.message || "").toString();
+                if (errorStr.includes("'csc' is not recognized") || errorStr.includes("command not found")) {
+                    return res.json({ output: "System Error: C# Compiler (csc) is not installed or not in PATH.\nPlease install .NET Framework or Visual Studio Build Tools." });
+                }
+                if (error.killed) return res.json({ output: "Error: Script timed out." });
+                return res.json({ output: stderr || error.message });
+            }
+            res.json({ output: stdout || stderr });
+        });
+        return;
+    }
+
     // Default logic for Python/JS (Single file)
     const extension = language === 'python' ? 'py' : 'js';
     const filename = `job_${jobId}.${extension}`;
