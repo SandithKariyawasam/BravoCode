@@ -79,6 +79,8 @@ func main() {
             initialCode = `<?php
 echo "Hello from PHP!";
 ?>`;
+        } else if (language === 'swift') {
+            initialCode = `print("Hello from Swift!")`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }

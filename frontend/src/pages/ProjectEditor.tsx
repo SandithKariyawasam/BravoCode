@@ -394,7 +394,7 @@ const ProjectEditor = () => {
                     height="100%"
                     theme={theme === 'dark' ? "vs-dark" : "light"}
                     language={
-                        ['java', 'kotlin', 'go', 'rust', 'scala', 'dart', 'ruby', 'php', 'r', 'c', 'cpp', 'csharp', 'typescript', 'javascript'].includes(projectData.language)
+                        ['java', 'kotlin', 'go', 'rust', 'scala', 'dart', 'ruby', 'php', 'swift', 'r', 'c', 'cpp', 'csharp', 'typescript', 'javascript'].includes(projectData.language)
                             ? projectData.language
                             : 'python'
                     }
