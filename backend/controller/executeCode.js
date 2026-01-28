@@ -170,6 +170,47 @@ const executeCode = (req, res) => {
         return;
     }
 
+    if (language === 'typescript') {
+        const jobId = Date.now();
+        const tempDir = path.join(__dirname, '../temp');
+        const jobDir = path.join(tempDir, `job_${jobId}`);
+
+        if (!fs.existsSync(jobDir)) {
+            fs.mkdirSync(jobDir);
+        }
+
+        const filename = 'main.ts';
+        const jsFilename = 'main.js';
+        const filePath = path.join(jobDir, filename);
+
+        fs.writeFileSync(filePath, code);
+
+        // Command: tsc main.ts && node main.js
+        // We assume tsc is in PATH (e.g., globally installed or local node_modules/.bin)
+        // If local, we might need `npx tsc` but that's slower. Let's try direct tsc first.
+        const command = `cd "${jobDir}" && tsc ${filename} && node ${jsFilename}`;
+
+        exec(command, { timeout: 15000 }, (error, stdout, stderr) => {
+            // Cleanup
+            try {
+                fs.rmSync(jobDir, { recursive: true, force: true });
+            } catch (err) {
+                console.error("Failed to cleanup TS job", err);
+            }
+
+            if (error) {
+                const errorStr = (stderr || error.message || "").toString();
+                if (errorStr.includes("'tsc' is not recognized") || errorStr.includes("command not found")) {
+                    return res.json({ output: "System Error: TypeScript Compiler (tsc) is not installed.\nPlease install it globally via: npm install -g typescript" });
+                }
+                if (error.killed) return res.json({ output: "Error: Script timed out." });
+                return res.json({ output: stderr || error.message });
+            }
+            res.json({ output: stdout || stderr });
+        });
+        return;
+    }
+
     // Default logic for Python/JS (Single file)
     const extension = language === 'python' ? 'py' : 'js';
     const filename = `job_${jobId}.${extension}`;

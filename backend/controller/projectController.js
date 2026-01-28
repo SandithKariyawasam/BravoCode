@@ -15,6 +15,12 @@ const createProject = async (req, res) => {
         System.out.println("Hello from Java!");
     }
 }`;
+        } else if (language === 'typescript') {
+            initialCode = `const greet = (name: string): string => {
+    return "Hello " + name + " from TypeScript!";
+};
+
+console.log(greet("Developer"));`;
         } else if (language === 'python') {
             initialCode = `print("Hello from Python!")`;
         } else if (language === 'r') {
