@@ -417,20 +417,20 @@ const executeCode = (req, res) => {
         const jobDir = path.join(tempDir, `job_${jobId}`);
 
         if (!fs.existsSync(jobDir)) {
-             fs.mkdirSync(jobDir);
+            fs.mkdirSync(jobDir);
         }
 
         const filename = 'main.rb';
         const filePath = path.join(jobDir, filename);
-        
+
         fs.writeFileSync(filePath, code);
 
         // Command: ruby main.rb
         const command = `cd "${jobDir}" && ruby ${filename}`;
 
         exec(command, { timeout: 15000 }, (error, stdout, stderr) => {
-             // Cleanup
-             try {
+            // Cleanup
+            try {
                 fs.rmSync(jobDir, { recursive: true, force: true });
             } catch (err) {
                 console.error("Failed to cleanup Ruby job", err);
@@ -440,6 +440,44 @@ const executeCode = (req, res) => {
                 const errorStr = (stderr || error.message || "").toString();
                 if (errorStr.includes("'ruby' is not recognized") || errorStr.includes("command not found")) {
                     return res.json({ output: "System Error: Ruby is not installed.\nPlease install Ruby." });
+                }
+                if (error.killed) return res.json({ output: "Error: Script timed out." });
+                return res.json({ output: stderr || error.message });
+            }
+            res.json({ output: stdout || stderr });
+        });
+        return;
+    }
+
+    if (language === 'php') {
+        const jobId = Date.now();
+        const tempDir = path.join(__dirname, '../temp');
+        const jobDir = path.join(tempDir, `job_${jobId}`);
+
+        if (!fs.existsSync(jobDir)) {
+            fs.mkdirSync(jobDir);
+        }
+
+        const filename = 'main.php';
+        const filePath = path.join(jobDir, filename);
+
+        fs.writeFileSync(filePath, code);
+
+        // Command: php main.php
+        const command = `cd "${jobDir}" && php ${filename}`;
+
+        exec(command, { timeout: 15000 }, (error, stdout, stderr) => {
+            // Cleanup
+            try {
+                fs.rmSync(jobDir, { recursive: true, force: true });
+            } catch (err) {
+                console.error("Failed to cleanup PHP job", err);
+            }
+
+            if (error) {
+                const errorStr = (stderr || error.message || "").toString();
+                if (errorStr.includes("'php' is not recognized") || errorStr.includes("command not found")) {
+                    return res.json({ output: "System Error: PHP is not installed.\nPlease install PHP." });
                 }
                 if (error.killed) return res.json({ output: "Error: Script timed out." });
                 return res.json({ output: stderr || error.message });

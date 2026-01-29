@@ -75,6 +75,10 @@ func main() {
 }`;
         } else if (language === 'ruby') {
             initialCode = `puts "Hello from Ruby!"`;
+        } else if (language === 'php') {
+            initialCode = `<?php
+echo "Hello from PHP!";
+?>`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }
