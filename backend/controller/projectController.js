@@ -69,6 +69,10 @@ func main() {
         println("Hello from Scala!")
     }
 }`;
+        } else if (language === 'dart') {
+            initialCode = `void main() {
+  print('Hello from Dart!');
+}`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }
