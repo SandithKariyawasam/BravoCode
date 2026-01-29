@@ -92,6 +92,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, loading }: ModalProps) 
               <option value="rust">Rust</option>
               <option value="scala">Scala</option>
               <option value="dart">Dart</option>
+              <option value="ruby">Ruby</option>
               <option value="r">R</option>
               <option value="c">C</option>
               <option value="cpp">C++</option>

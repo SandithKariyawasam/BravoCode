@@ -73,6 +73,8 @@ func main() {
             initialCode = `void main() {
   print('Hello from Dart!');
 }`;
+        } else if (language === 'ruby') {
+            initialCode = `puts "Hello from Ruby!"`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }
