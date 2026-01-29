@@ -88,6 +88,7 @@ const CreateProjectModal = ({ isOpen, onClose, onSubmit, loading }: ModalProps) 
               <option value="python">Python</option>
               <option value="java">Java</option>
               <option value="kotlin">Kotlin</option>
+              <option value="go">Go</option>
               <option value="r">R</option>
               <option value="c">C</option>
               <option value="cpp">C++</option>

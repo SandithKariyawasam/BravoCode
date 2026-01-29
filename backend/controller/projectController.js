@@ -51,6 +51,14 @@ class Program {
             initialCode = `fun main() {
     println("Hello from Kotlin!")
 }`;
+        } else if (language === 'go') {
+            initialCode = `package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello from Go!")
+}`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }
