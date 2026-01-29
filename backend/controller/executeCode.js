@@ -332,6 +332,46 @@ const executeCode = (req, res) => {
         return;
     }
 
+    if (language === 'scala') {
+        const jobId = Date.now();
+        const tempDir = path.join(__dirname, '../temp');
+        const jobDir = path.join(tempDir, `job_${jobId}`);
+
+        if (!fs.existsSync(jobDir)) {
+            fs.mkdirSync(jobDir);
+        }
+
+        const filename = 'Main.scala';
+        const filePath = path.join(jobDir, filename);
+
+        fs.writeFileSync(filePath, code);
+
+        // Command: scalac Main.scala && scala Main
+        // We assume scalac and scala are in PATH.
+        // We need to set the classpath to current dir usually, but default might work.
+        const command = `cd "${jobDir}" && scalac ${filename} && scala -classpath . Main`;
+
+        exec(command, { timeout: 20000 }, (error, stdout, stderr) => { // Scala cold start can be slow
+            // Cleanup
+            try {
+                fs.rmSync(jobDir, { recursive: true, force: true });
+            } catch (err) {
+                console.error("Failed to cleanup Scala job", err);
+            }
+
+            if (error) {
+                const errorStr = (stderr || error.message || "").toString();
+                if (errorStr.includes("'scalac' is not recognized") || errorStr.includes("command not found")) {
+                    return res.json({ output: "System Error: Scala is not installed.\nPlease install Scala via coursier or your package manager." });
+                }
+                if (error.killed) return res.json({ output: "Error: Script timed out." });
+                return res.json({ output: stderr || error.message });
+            }
+            res.json({ output: stdout || stderr });
+        });
+        return;
+    }
+
     // Default logic for Python/JS (Single file)
     const extension = language === 'python' ? 'py' : 'js';
     const filename = `job_${jobId}.${extension}`;

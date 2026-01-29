@@ -63,6 +63,12 @@ func main() {
             initialCode = `fn main() {
     println!("Hello from Rust!");
 }`;
+        } else if (language === 'scala') {
+            initialCode = `object Main {
+    def main(args: Array[String]): Unit = {
+        println("Hello from Scala!")
+    }
+}`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }
