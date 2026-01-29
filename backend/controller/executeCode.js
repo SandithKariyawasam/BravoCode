@@ -290,6 +290,48 @@ const executeCode = (req, res) => {
         return;
     }
 
+    if (language === 'rust') {
+        const jobId = Date.now();
+        const tempDir = path.join(__dirname, '../temp');
+        const jobDir = path.join(tempDir, `job_${jobId}`);
+
+        if (!fs.existsSync(jobDir)) {
+            fs.mkdirSync(jobDir);
+        }
+
+        const filename = 'main.rs';
+        const filePath = path.join(jobDir, filename);
+        const outputName = process.platform === 'win32' ? 'main.exe' : 'main';
+
+        fs.writeFileSync(filePath, code);
+
+        // Command: rustc main.rs -o main.exe && main.exe
+        // We assume rustc is in PATH.
+        // Rust outputs to the current directory by default, so we can just run outputName
+        const runCmd = process.platform === 'win32' ? outputName : `./${outputName}`;
+        const command = `cd "${jobDir}" && rustc ${filename} -o ${outputName} && ${runCmd}`;
+
+        exec(command, { timeout: 15000 }, (error, stdout, stderr) => {
+            // Cleanup
+            try {
+                fs.rmSync(jobDir, { recursive: true, force: true });
+            } catch (err) {
+                console.error("Failed to cleanup Rust job", err);
+            }
+
+            if (error) {
+                const errorStr = (stderr || error.message || "").toString();
+                if (errorStr.includes("'rustc' is not recognized") || errorStr.includes("command not found")) {
+                    return res.json({ output: "System Error: Rust Compiler (rustc) is not installed.\nPlease install Rust from https://rustup.rs/" });
+                }
+                if (error.killed) return res.json({ output: "Error: Script timed out." });
+                return res.json({ output: stderr || error.message });
+            }
+            res.json({ output: stdout || stderr });
+        });
+        return;
+    }
+
     // Default logic for Python/JS (Single file)
     const extension = language === 'python' ? 'py' : 'js';
     const filename = `job_${jobId}.${extension}`;

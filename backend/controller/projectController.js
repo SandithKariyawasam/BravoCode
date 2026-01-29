@@ -59,6 +59,10 @@ import "fmt"
 func main() {
     fmt.Println("Hello from Go!")
 }`;
+        } else if (language === 'rust') {
+            initialCode = `fn main() {
+    println!("Hello from Rust!");
+}`;
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }
