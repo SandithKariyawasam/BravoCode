@@ -13,6 +13,8 @@ interface ThemeColors {
     buttonDanger: string;
     buttonSuccess: string;
     hover: string;
+    activeTab: string;
+    inactiveTab: string;
 }
 
 const lightColors: ThemeColors = {
@@ -25,7 +27,9 @@ const lightColors: ThemeColors = {
     buttonPrimary: '#0969da',
     buttonDanger: '#cf222e',
     buttonSuccess: '#1a7f37',
-    hover: '#f3f4f6'
+    hover: '#f3f4f6',
+    activeTab: '#fd8c73', // Light orange for light mode active
+    inactiveTab: '#f6f8fa'
 };
 
 const darkColors: ThemeColors = {
@@ -38,7 +42,9 @@ const darkColors: ThemeColors = {
     buttonPrimary: '#1F6FEB',
     buttonDanger: '#da3633',
     buttonSuccess: '#238636',
-    hover: '#21262D'
+    hover: '#21262D',
+    activeTab: '#1F6FEB',
+    inactiveTab: '#21262D'
 };
 
 interface ThemeContextType {

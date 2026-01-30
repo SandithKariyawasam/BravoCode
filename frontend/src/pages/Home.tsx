@@ -352,7 +352,17 @@ const ProjectCard = ({ title, desc, lang, onClick }: { title: string, desc: stri
       padding: '1.5rem', color: colors.textSecondary, cursor: 'pointer', transition: '0.2s'
     }}>
       <h3 style={{ margin: '0 0 10px 0', color: colors.buttonPrimary }}>{title}</h3>
-      <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '1rem' }}>{desc}</p>
+      <p style={{
+        color: colors.textSecondary,
+        fontSize: '0.9rem',
+        marginBottom: '1rem',
+        wordBreak: 'break-word',
+        overflowWrap: 'break-word',
+        display: '-webkit-box',
+        WebkitLineClamp: 3,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden'
+      }}>{desc}</p>
       <span style={{ fontSize: '0.8rem', border: `1px solid ${colors.border}`, padding: '2px 8px', borderRadius: '10px', color: colors.textSecondary }}>
         {lang}
       </span>

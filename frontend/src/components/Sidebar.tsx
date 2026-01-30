@@ -85,7 +85,7 @@ const Sidebar = ({ activeTab, setActiveTab, onCreateWebProject, webProjects }: {
                 {/* Web Projects List */}
                 {webProjects && webProjects.length > 0 && (
                     <div style={{ marginTop: '1rem' }}>
-                        <p style={{ fontSize: '0.75rem', color: colors.textSecondary, fontWeight: 'bold', marginBottom: '0.5rem', paddingLeft: '5px' }}>WEB SANDBOXES</p>
+                        <p className="menu-header" style={{ fontSize: '0.75rem', color: colors.textSecondary, fontWeight: 'bold', marginBottom: '0.5rem', paddingLeft: '5px' }}>WEB SANDBOXES</p>
                         {webProjects.map((project: any) => (
                             <div
                                 key={project.id}
@@ -106,7 +106,7 @@ const Sidebar = ({ activeTab, setActiveTab, onCreateWebProject, webProjects }: {
                                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                             >
                                 <span>📄</span>
-                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.title}</span>
+                                <span className="sidebar-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.title}</span>
                             </div>
                         ))}
                     </div>

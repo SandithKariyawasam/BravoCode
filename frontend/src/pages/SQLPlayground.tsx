@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 // @ts-ignore
 import initSqlJs from 'sql.js';
+import { useTheme } from '../context/ThemeContext';
 
 const SQLPlayground = () => {
     const navigate = useNavigate();
+    const { colors, theme } = useTheme();
     const [db, setDb] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<any[]>([]);
@@ -110,24 +112,16 @@ SELECT * FROM Customers;
         }
     };
 
-    const colors = {
-        background: '#0D1117',
-        sidebarBg: '#161B22',
-        border: '#30363D',
-        text: '#C9D1D9',
-        button: '#238636'
-    };
-
-    if (loading) return <div style={{ color: 'white', padding: '20px' }}>Loading SQL Engine...</div>;
+    if (loading) return <div style={{ color: colors.text, padding: '20px', backgroundColor: colors.background, height: '100vh' }}>Loading SQL Engine...</div>;
 
     return (
-        <div style={{ display: 'flex', height: '100vh', width: '100%', backgroundColor: colors.background, color: colors.text }}>
+        <div className="editor-layout" style={{ backgroundColor: colors.background, color: colors.text }}>
 
             {/* SIDEBAR: Schema View */}
-            <div style={{ width: '280px', backgroundColor: colors.sidebarBg, borderRight: `1px solid ${colors.border}`, padding: '1rem', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <div className="editor-sidebar-panel" style={{ backgroundColor: colors.sidebarBg, borderRight: `1px solid ${colors.border}`, overflowY: 'auto' }}>
                 <button
                     onClick={() => navigate('/dashboard')}
-                    style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: '#58A6FF', cursor: 'pointer', textAlign: 'left' }}
+                    style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: colors.buttonPrimary, cursor: 'pointer', textAlign: 'left' }}
                 >
                     ← Dashboard
                 </button>
@@ -137,31 +131,31 @@ SELECT * FROM Customers;
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     {schema.map(table => (
                         <div key={table.name}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold', color: 'white', marginBottom: '5px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 'bold', color: colors.text, marginBottom: '5px' }}>
                                 <span>📄</span> {table.name}
                             </div>
                             <div style={{ paddingLeft: '20px', borderLeft: `1px solid ${colors.border}` }}>
                                 {table.columns.map((col: any) => (
-                                    <div key={col.name} style={{ fontSize: '0.85rem', color: '#8B949E', display: 'flex', justifyContent: 'space-between' }}>
+                                    <div key={col.name} style={{ fontSize: '0.85rem', color: colors.textSecondary, display: 'flex', justifyContent: 'space-between' }}>
                                         <span>{col.name}</span>
-                                        <span style={{ fontSize: '0.75rem', color: '#58A6FF' }}>{col.type}</span>
+                                        <span style={{ fontSize: '0.75rem', color: colors.buttonPrimary }}>{col.type}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     ))}
-                    {schema.length === 0 && <p style={{ fontSize: '0.8rem', color: '#8B949E' }}>No tables found.</p>}
+                    {schema.length === 0 && <p style={{ fontSize: '0.8rem', color: colors.textSecondary }}>No tables found.</p>}
                 </div>
 
                 <div style={{ marginTop: 'auto', paddingTop: '20px' }}>
-                    <p style={{ fontSize: '0.75rem', color: '#8B949E' }}>
+                    <p style={{ fontSize: '0.75rem', color: colors.textSecondary }}>
                         * Database resets on refresh.
                     </p>
                 </div>
             </div>
 
             {/* MAIN CONTENT */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div className="editor-main-panel">
 
                 {/* TOOLBAR */}
                 <div style={{ height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.sidebarBg }}>
@@ -171,7 +165,7 @@ SELECT * FROM Customers;
                     <button
                         onClick={handleRun}
                         style={{
-                            backgroundColor: colors.button, color: 'white', border: 'none',
+                            backgroundColor: colors.buttonPrimary, color: 'white', border: 'none',
                             padding: '8px 20px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold',
                             display: 'flex', alignItems: 'center', gap: '5px'
                         }}
@@ -181,13 +175,13 @@ SELECT * FROM Customers;
                 </div>
 
                 {/* SPLIT VIEW */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div className="split-view">
 
                     {/* EDITOR */}
-                    <div style={{ flex: 1, minHeight: '40%', borderBottom: `1px solid ${colors.border}` }}>
+                    <div className="split-panel" style={{ borderBottom: `1px solid ${colors.border}` }}>
                         <Editor
                             height="100%"
-                            theme="vs-dark"
+                            theme={theme === 'dark' ? "vs-dark" : "light"}
                             defaultLanguage="sql"
                             value={code}
                             onChange={(value) => setCode(value || "")}
@@ -201,11 +195,11 @@ SELECT * FROM Customers;
                     </div>
 
                     {/* RESULTS / ERROR */}
-                    <div style={{ flex: 1, padding: '20px', overflow: 'auto', backgroundColor: '#010409' }}>
-                        <h4 style={{ marginTop: 0, color: '#8B949E', textTransform: 'uppercase', fontSize: '0.8rem' }}>Output</h4>
+                    <div className="split-panel" style={{ padding: '20px', overflow: 'auto', backgroundColor: colors.background }}>
+                        <h4 style={{ marginTop: 0, color: colors.textSecondary, textTransform: 'uppercase', fontSize: '0.8rem' }}>Output</h4>
 
                         {error && (
-                            <div style={{ padding: '10px', backgroundColor: 'rgba(218, 54, 51, 0.2)', color: '#ff7b72', border: '1px solid #da3633', borderRadius: '6px' }}>
+                            <div style={{ padding: '10px', backgroundColor: 'rgba(218, 54, 51, 0.2)', color: colors.buttonDanger, border: `1px solid ${colors.buttonDanger}`, borderRadius: '6px' }}>
                                 <strong>Error:</strong> {error}
                             </div>
                         )}
@@ -214,12 +208,12 @@ SELECT * FROM Customers;
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 {result.map((res, idx) => (
                                     <div key={idx} style={{ overflowX: 'auto' }}>
-                                        <p style={{ fontSize: '0.8rem', color: '#8B949E', marginBottom: '5px' }}>Result Set {idx + 1}</p>
+                                        <p style={{ fontSize: '0.8rem', color: colors.textSecondary, marginBottom: '5px' }}>Result Set {idx + 1}</p>
                                         <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.9rem' }}>
                                             <thead>
                                                 <tr style={{ backgroundColor: colors.sidebarBg }}>
                                                     {res.columns.map((col: string, cIdx: number) => (
-                                                        <th key={cIdx} style={{ padding: '8px', border: `1px solid ${colors.border}`, textAlign: 'left' }}>{col}</th>
+                                                        <th key={cIdx} style={{ padding: '8px', border: `1px solid ${colors.border}`, textAlign: 'left', color: colors.text }}>{col}</th>
                                                     ))}
                                                 </tr>
                                             </thead>
@@ -227,7 +221,7 @@ SELECT * FROM Customers;
                                                 {res.values.map((row: any[], rIdx: number) => (
                                                     <tr key={rIdx}>
                                                         {row.map((val: any, vIdx: number) => (
-                                                            <td key={vIdx} style={{ padding: '8px', border: `1px solid ${colors.border}` }}>{val}</td>
+                                                            <td key={vIdx} style={{ padding: '8px', border: `1px solid ${colors.border}`, color: colors.text }}>{val}</td>
                                                         ))}
                                                     </tr>
                                                 ))}
@@ -237,7 +231,7 @@ SELECT * FROM Customers;
                                 ))}
                             </div>
                         ) : (
-                            !error && <p style={{ color: '#8B949E', fontStyle: 'italic' }}>Run query to see results...</p>
+                            !error && <p style={{ color: colors.textSecondary, fontStyle: 'italic' }}>Run query to see results...</p>
                         )}
                     </div>
 

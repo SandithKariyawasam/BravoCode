@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const WebProjectEditor = () => {
     const { projectId } = useParams();
     const navigate = useNavigate();
     const { currentUser } = useAuth()!;
+    const { colors, theme } = useTheme();
+
     const [projectData, setProjectData] = useState<any>(null);
     const [html, setHtml] = useState("");
     const [css, setCss] = useState("");
@@ -77,12 +80,8 @@ const WebProjectEditor = () => {
             fetchProject(true);
         }, 2000); // Poll every 2 seconds
         return () => clearInterval(interval);
-    }, [isLive, serverLastSaved, html, css, js, fetchProject]); // Dependencies needed for comparison logic? Actually fetchProject closes over state? 
-    // Wait, if fetchProject is not recreated, it closes over STALE html/css/js constants.
-    // I need to be careful. The fetchProject function is defined inside component, so it regenerates on render.
-    // So the effect needs to depend on it or it needs to use refs. 
-    // Simplified: Just trusting the server timestamp check. If server is newer, I overwrite.
-    // This is "Last Write Wins" (Server Wins).
+    }, [isLive, serverLastSaved, html, css, js, fetchProject]);
+
 
     // 2. Update Preview (Debounced)
     const [srcDoc, setSrcDoc] = useState("");
@@ -156,10 +155,6 @@ const WebProjectEditor = () => {
         }
     };
 
-    // Auto-Save Trigger (Optional - debounces save)
-    // For now, let's keep it manual to avoid overwriting issues, 
-    // or we can add a simple "Ctrl+S" listener.
-
     // Keyboard Shortcut
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -172,16 +167,7 @@ const WebProjectEditor = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [html, css, js]); // Re-bind with current state
 
-    if (loading) return <div style={{ color: 'white', padding: '20px' }}>Loading Editor...</div>;
-
-    const colors = {
-        background: '#0D1117',
-        sidebarBg: '#161B22',
-        border: '#30363D',
-        text: '#C9D1D9',
-        activeTab: '#1F6FEB',
-        inactiveTab: '#21262D'
-    };
+    if (loading) return <div style={{ color: colors.text, padding: '20px', backgroundColor: colors.background, height: '100vh' }}>Loading Editor...</div>;
 
     // 5. Share Functionality
     const handleShare = () => {
@@ -204,19 +190,19 @@ const WebProjectEditor = () => {
     };
 
     return (
-        <div style={{ display: 'flex', height: '100vh', width: '100%', backgroundColor: '#0D1117', color: '#c9d1d9' }}>
+        <div className="editor-layout" style={{ backgroundColor: colors.background, color: colors.text }}>
 
             {/* LEFT SIDEBAR - FILES & MEMBERS */}
-            <div style={{ width: '250px', backgroundColor: '#161B22', borderRight: '1px solid #30363d', display: 'flex', flexDirection: 'column', padding: '10px' }}>
-                <button onClick={() => navigate('/dashboard')} style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: '#58a6ff', cursor: 'pointer', textAlign: 'left' }}>← Dashboard</button>
+            <div className="editor-sidebar-panel" style={{ backgroundColor: colors.sidebarBg, borderRight: `1px solid ${colors.border}` }}>
+                <button onClick={() => navigate('/dashboard')} style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: colors.buttonPrimary, cursor: 'pointer', textAlign: 'left' }}>← Dashboard</button>
 
                 <h3>{projectData ? projectData.title : 'Loading...'}</h3>
 
                 {/* Available Files (Tabs) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
-                    <button style={{ ...tabStyle, backgroundColor: activeTab === 'html' ? '#30363d' : 'transparent', color: '#E34C26' }} onClick={() => setActiveTab('html')}>index.html</button>
-                    <button style={{ ...tabStyle, backgroundColor: activeTab === 'css' ? '#30363d' : 'transparent', color: '#563D7C' }} onClick={() => setActiveTab('css')}>style.css</button>
-                    <button style={{ ...tabStyle, backgroundColor: activeTab === 'js' ? '#30363d' : 'transparent', color: '#F1E05A' }} onClick={() => setActiveTab('js')}>script.js</button>
+                    <button style={{ ...tabStyle, backgroundColor: activeTab === 'html' ? colors.border : 'transparent', color: '#E34C26' }} onClick={() => setActiveTab('html')}>index.html</button>
+                    <button style={{ ...tabStyle, backgroundColor: activeTab === 'css' ? colors.border : 'transparent', color: '#563D7C' }} onClick={() => setActiveTab('css')}>style.css</button>
+                    <button style={{ ...tabStyle, backgroundColor: activeTab === 'js' ? colors.border : 'transparent', color: '#F1E05A' }} onClick={() => setActiveTab('js')}>script.js</button>
                 </div>
 
                 <div style={{ marginBottom: '20px' }}>
@@ -224,7 +210,7 @@ const WebProjectEditor = () => {
                         onClick={handleShare}
                         style={{
                             width: '100%', padding: '8px',
-                            backgroundColor: '#1F6FEB', color: 'white',
+                            backgroundColor: colors.buttonPrimary, color: 'white',
                             border: 'none', borderRadius: '6px', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
                         }}
@@ -239,14 +225,14 @@ const WebProjectEditor = () => {
                             style={{
                                 width: '100%', marginBottom: '15px', padding: '8px',
                                 background: 'transparent',
-                                border: `1px solid #da3633`, borderRadius: '6px',
-                                color: '#da3633', cursor: 'pointer', fontSize: '0.9rem'
+                                border: `1px solid ${colors.buttonDanger}`, borderRadius: '6px',
+                                color: colors.buttonDanger, cursor: 'pointer', fontSize: '0.9rem'
                             }}
                         >
                             🗑️ Delete Project
                         </button>
                     )}
-                    <p style={{ fontSize: '0.8rem', color: '#8B949E' }}>
+                    <p style={{ fontSize: '0.8rem', color: colors.textSecondary }}>
                         Live Preview Mode.<br />
                         Press <b>Ctrl+S</b> to save.
                     </p>
@@ -255,7 +241,7 @@ const WebProjectEditor = () => {
             </div>
 
             {/* MAIN CONTENT SPLIT */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <div className="editor-main-panel">
 
                 {/* TOOLBAR & TABS */}
                 <div style={{ height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.sidebarBg }}>
@@ -271,7 +257,7 @@ const WebProjectEditor = () => {
                                     border: 'none',
                                     borderBottom: activeTab === lang ? `2px solid ${colors.activeTab}` : '2px solid transparent',
                                     backgroundColor: 'transparent',
-                                    color: activeTab === lang ? 'white' : '#8B949E',
+                                    color: activeTab === lang ? colors.text : colors.textSecondary,
                                     cursor: 'pointer',
                                     fontWeight: 'bold',
                                     textTransform: 'uppercase'
@@ -288,13 +274,13 @@ const WebProjectEditor = () => {
                         style={{
                             display: 'flex', alignItems: 'center', gap: '5px',
                             padding: '5px 15px', borderRadius: '4px', border: 'none',
-                            backgroundColor: isLive ? '#238636' : '#21262D',
-                            color: isLive ? 'white' : '#8B949E',
+                            backgroundColor: isLive ? '#238636' : colors.inactiveTab,
+                            color: isLive ? 'white' : colors.textSecondary,
                             cursor: 'pointer', marginRight: '10px'
                         }}
                         title={isLive ? "Syncing with others..." : "Click to enable Real-Time Sync"}
                     >
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isLive ? '#3fb950' : '#8B949E', boxShadow: isLive ? '0 0 5px #3fb950' : 'none' }}></div>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isLive ? '#3fb950' : colors.textSecondary, boxShadow: isLive ? '0 0 5px #3fb950' : 'none' }}></div>
                         {isLive ? 'Live Sync ON' : 'Live Sync OFF'}
                     </button>
 
@@ -303,7 +289,7 @@ const WebProjectEditor = () => {
                         onClick={() => handleSave()}
                         disabled={saving}
                         style={{
-                            backgroundColor: '#1F6FEB', color: 'white', border: 'none',
+                            backgroundColor: colors.buttonPrimary, color: 'white', border: 'none',
                             padding: '5px 15px', borderRadius: '4px', cursor: 'pointer', opacity: saving ? 0.7 : 1
                         }}
                     >
@@ -312,13 +298,13 @@ const WebProjectEditor = () => {
                 </div>
 
                 {/* EDITOR + PREVIEW SPLIT */}
-                <div style={{ flex: 1, display: 'flex' }}>
+                <div className="split-view">
 
                     {/* CODE EDITOR (Left) */}
-                    <div style={{ flex: 1, borderRight: `1px solid ${colors.border}` }}>
+                    <div className="split-panel" style={{ borderRight: `1px solid ${colors.border}` }}>
                         <Editor
                             height="100%"
-                            theme="vs-dark"
+                            theme={theme === 'dark' ? "vs-dark" : "light"}
                             language={activeTab === 'js' ? 'javascript' : activeTab}
                             value={activeTab === 'html' ? html : (activeTab === 'css' ? css : js)}
                             onChange={(value) => {
@@ -335,8 +321,8 @@ const WebProjectEditor = () => {
                     </div>
 
                     {/* LIVE PREVIEW (Right) */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ padding: '5px 10px', backgroundColor: '#010409', borderBottom: `1px solid ${colors.border}`, fontSize: '0.8rem', color: '#8B949E' }}>
+                    <div className="split-panel" style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ padding: '5px 10px', backgroundColor: colors.background, borderBottom: `1px solid ${colors.border}`, fontSize: '0.8rem', color: colors.textSecondary }}>
                             LIVE PREVIEW
                         </div>
                         <iframe

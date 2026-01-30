@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const JoinProject = () => {
     const { projectId } = useParams();
     const { currentUser } = useAuth()!;
+    const { colors } = useTheme();
     const navigate = useNavigate();
     const [status, setStatus] = useState("Joining Project...");
     const [error, setError] = useState<string | null>(null);
@@ -41,14 +43,14 @@ const JoinProject = () => {
     }, [projectId, currentUser, navigate]);
 
     return (
-        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0D1117', color: 'white' }}>
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background, color: colors.text }}>
             <h2>{status}</h2>
-            {error && <p style={{ color: '#da3633' }}>{error}</p>}
+            {error && <p style={{ color: colors.buttonDanger }}>{error}</p>}
 
             {status === "Failed" && (
                 <button
                     onClick={() => navigate('/dashboard')}
-                    style={{ marginTop: '20px', padding: '10px 20px', backgroundColor: '#238636', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                    style={{ marginTop: '20px', padding: '10px 20px', backgroundColor: colors.buttonPrimary, color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
                 >
                     Go to Dashboard
                 </button>

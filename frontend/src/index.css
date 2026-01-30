@@ -151,3 +151,32 @@ body {
         border-top: 1px solid #30363D;
     }
 }
+
+/* GENERIC SPLIT VIEW (50/50 -> Stacked) */
+.split-view {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.split-panel {
+    flex: 1;
+    overflow: hidden;
+    /* Force min height or width if needed */
+}
+
+@media (max-width: 768px) {
+    .split-view {
+        flex-direction: column;
+        height: auto;
+        /* Allow growing */
+        min-height: 600px;
+    }
+
+    .split-panel {
+        flex: none;
+        height: 50%;
+        width: 100%;
+        min-height: 300px;
+    }
+}
