@@ -95,7 +95,7 @@ body {
 }
 
 .editor-sidebar-panel {
-    width: 250px;
+    width: 340px;
     padding: 1rem;
     display: flex;
     flex-direction: column;

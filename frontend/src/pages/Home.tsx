@@ -33,7 +33,7 @@ const Dashboard = () => {
   }, [currentUser]);
 
   const handleCreateProject = async (title: string, desc: string, lang: string) => {
-    if (!currentUser) return;
+    if (!currentUser) return null;
 
     setLoading(true);
     try {
@@ -59,10 +59,12 @@ const Dashboard = () => {
       // Update list
       setProjects(prev => [...prev, newProject]);
       setIsModalOpen(false);
+      return newProject.id;
 
     } catch (error) {
       console.error("Error creating project:", error);
       alert("Failed to create project. Check console for details.");
+      return null;
     } finally {
       setLoading(false);
     }
@@ -137,17 +139,39 @@ const Dashboard = () => {
   };
 
 
-  // Filter projects based on active tab
+  // Web Projects for Sidebar (Own + Shared)
+  const webProjects = projects.filter(p =>
+    p.language === 'web' &&
+    (p.ownerId === currentUser?.uid || (p.members && p.members.includes(currentUser?.uid)))
+  );
+
+  // Filter projects based on active tab (EXCLUDING Web Projects)
   const displayedProjects = projects.filter(p => {
     if (!currentUser) return false;
+    // Exclude web projects from main grid
+    if (p.language === 'web') return false;
+
     if (activeTab === 'my') return p.ownerId === currentUser.uid;
     if (activeTab === 'shared') return p.members && p.members.includes(currentUser.uid) && p.ownerId !== currentUser.uid;
     return true;
   });
 
+  const handleCreateWebSandbox = async () => {
+    const timestamp = new Date().toLocaleTimeString();
+    const newId = await handleCreateProject(`Web Sandbox ${timestamp}`, "HTML/CSS/JS Playground", "web");
+    if (newId) {
+      navigate(`/editor/${newId}`);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: colors.background }}>
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onCreateWebProject={handleCreateWebSandbox}
+        webProjects={webProjects}
+      />
       <div style={{ flex: 1, padding: '2rem', overflowY: 'auto' }}>
 
         {activeTab === 'settings' ? (

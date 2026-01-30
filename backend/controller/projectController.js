@@ -81,6 +81,55 @@ echo "Hello from PHP!";
 ?>`;
         } else if (language === 'swift') {
             initialCode = `print("Hello from Swift!")`;
+        } else if (language === 'web') {
+            initialCode = JSON.stringify({
+                html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Web App</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Hello World</h1>
+        <p>Start editing to see some magic happen!</p>
+        <button id="btn">Click Me</button>
+    </div>
+</body>
+</html>`,
+                css: `body {
+    font-family: sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+
+.container {
+    text-align: center;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h1 { color: #333; }
+button {
+    padding: 10px 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover { background: #0056b3; }`,
+                js: `document.getElementById('btn').addEventListener('click', () => {
+    alert('Button Clicked!');
+});`
+            });
         } else {
             initialCode = `console.log("Hello from Javascript!");`;
         }

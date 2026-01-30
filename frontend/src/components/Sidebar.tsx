@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import logo from '../assets/images/BravoCode.png'
 
-const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (tab: string) => void }) => {
+const Sidebar = ({ activeTab, setActiveTab, onCreateWebProject, webProjects }: { activeTab: string, setActiveTab: (tab: string) => void, onCreateWebProject: () => void, webProjects: any[] }) => {
     const { logout, currentUser } = useAuth()!;
     const { colors, theme } = useTheme();
     const navigate = useNavigate();
@@ -31,6 +31,62 @@ const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string, setActiveTab:
                 <NavButton icon="📂" label="My Projects" active={activeTab === 'my'} onClick={() => setActiveTab('my')} />
                 <NavButton icon="👥" label="Shared with Me" active={activeTab === 'shared'} onClick={() => setActiveTab('shared')} />
                 <NavButton icon="⚙️" label="Settings" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+
+                <div style={{ height: '1px', backgroundColor: colors.border, margin: '15px 0' }}></div>
+
+                <button
+                    onClick={onCreateWebProject}
+                    className="sidebar-btn"
+                    style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        background: 'linear-gradient(90deg, #8957e5 0%, #ae84fa 100%)',
+                        border: 'none',
+                        color: 'white',
+                        padding: '10px 15px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '0.9rem',
+                        marginBottom: '10px'
+                    }}
+                >
+                    <span>🌐</span>
+                    <span className="sidebar-label">New Web Sandbox</span>
+                </button>
+
+                {/* Web Projects List */}
+                {webProjects && webProjects.length > 0 && (
+                    <div style={{ marginTop: '1rem' }}>
+                        <p style={{ fontSize: '0.75rem', color: colors.textSecondary, fontWeight: 'bold', marginBottom: '0.5rem', paddingLeft: '5px' }}>WEB SANDBOXES</p>
+                        {webProjects.map((project: any) => (
+                            <div
+                                key={project.id}
+                                onClick={() => navigate(`/editor/${project.id}`)}
+                                className="sidebar-btn"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    padding: '8px 10px',
+                                    cursor: 'pointer',
+                                    borderRadius: '6px',
+                                    color: colors.text,
+                                    fontSize: '0.9rem',
+                                    transition: 'background 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.hover}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                                <span>📄</span>
+                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.title}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* 3. User Profile (Bottom) */}

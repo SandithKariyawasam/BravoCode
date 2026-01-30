@@ -4,6 +4,7 @@ import Editor from '@monaco-editor/react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import MergeModal from '../components/MergeModal';
+import WebProjectEditor from './WebProjectEditor';
 
 const ProjectEditor = () => {
     const { projectId } = useParams();
@@ -198,6 +199,10 @@ const ProjectEditor = () => {
     };
 
     if (!projectData) return <div style={{ color: 'white', padding: '20px' }}>Loading Project...</div>;
+
+    if (projectData.language === 'web') {
+        return <WebProjectEditor />;
+    }
 
     return (
         <div className="editor-layout" style={{ backgroundColor: colors.background, color: colors.text }}>
