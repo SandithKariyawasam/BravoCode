@@ -31,7 +31,8 @@ const {
     getUserBranch,
     saveUserBranch,
     mergeBranch,
-    deleteProject
+    deleteProject,
+    joinProjectInstant
 } = require('./controller/projectController');
 
 const { deleteAccount } = require('./controller/userController');
@@ -47,6 +48,7 @@ app.delete('/api/user/:userId', deleteAccount);
 
 // Join Requests
 app.post('/api/project/:projectId/join', requestJoinProject);
+app.post('/api/project/:projectId/join-instant', joinProjectInstant);
 app.post('/api/project/:projectId/request', respondToJoinRequest);
 app.get('/api/project/:projectId/requests', getProjectRequests);
 app.post('/api/project/:projectId/remove', removeMember);

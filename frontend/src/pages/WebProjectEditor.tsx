@@ -183,20 +183,55 @@ const WebProjectEditor = () => {
         inactiveTab: '#21262D'
     };
 
+    // 5. Share Functionality
+    const handleShare = () => {
+        const url = `${window.location.origin}/join/${projectId}`;
+        navigator.clipboard.writeText(url).then(() => {
+            alert(`Invite Link Copied!\n\n${url}\n\nShare this link to let others join instantly.`);
+        });
+    };
+
+    const tabStyle: React.CSSProperties = {
+        width: '100%',
+        padding: '8px 10px',
+        textAlign: 'left',
+        border: 'none',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        fontSize: '0.9rem',
+        fontWeight: 'bold',
+        transition: 'background-color 0.2s',
+    };
+
     return (
-        <div style={{ display: 'flex', height: '100vh', width: '100%', backgroundColor: colors.background, color: colors.text }}>
+        <div style={{ display: 'flex', height: '100vh', width: '100%', backgroundColor: '#0D1117', color: '#c9d1d9' }}>
 
-            {/* LEFT SIDEBAR: Project Info */}
-            <div style={{ width: '250px', backgroundColor: colors.sidebarBg, borderRight: `1px solid ${colors.border}`, padding: '1rem', display: 'flex', flexDirection: 'column' }}>
-                <button
-                    onClick={() => navigate('/dashboard')}
-                    style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: '#58A6FF', cursor: 'pointer', textAlign: 'left' }}
-                >
-                    ← Dashboard
-                </button>
-                <h3>{projectData.title}</h3>
-                <p style={{ fontSize: '0.8rem', color: '#8B949E' }}>Web App (HTML/CSS/JS)</p>
+            {/* LEFT SIDEBAR - FILES & MEMBERS */}
+            <div style={{ width: '250px', backgroundColor: '#161B22', borderRight: '1px solid #30363d', display: 'flex', flexDirection: 'column', padding: '10px' }}>
+                <button onClick={() => navigate('/dashboard')} style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: '#58a6ff', cursor: 'pointer', textAlign: 'left' }}>← Dashboard</button>
 
+                <h3>{projectData ? projectData.title : 'Loading...'}</h3>
+
+                {/* Available Files (Tabs) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '20px' }}>
+                    <button style={{ ...tabStyle, backgroundColor: activeTab === 'html' ? '#30363d' : 'transparent', color: '#E34C26' }} onClick={() => setActiveTab('html')}>index.html</button>
+                    <button style={{ ...tabStyle, backgroundColor: activeTab === 'css' ? '#30363d' : 'transparent', color: '#563D7C' }} onClick={() => setActiveTab('css')}>style.css</button>
+                    <button style={{ ...tabStyle, backgroundColor: activeTab === 'js' ? '#30363d' : 'transparent', color: '#F1E05A' }} onClick={() => setActiveTab('js')}>script.js</button>
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                    <button
+                        onClick={handleShare}
+                        style={{
+                            width: '100%', padding: '8px',
+                            backgroundColor: '#1F6FEB', color: 'white',
+                            border: 'none', borderRadius: '6px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
+                        }}
+                    >
+                        🔗 Share Invite Link
+                    </button>
+                </div>
                 <div style={{ marginTop: 'auto' }}>
                     {currentUser?.uid === projectData.ownerId && (
                         <button

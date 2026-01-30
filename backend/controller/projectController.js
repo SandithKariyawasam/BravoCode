@@ -201,23 +201,26 @@ const getProjectById = async (req, res) => {
 
         const projectData = doc.data();
 
-        // Populate membersDetails if missing
-        if (!projectData.membersDetails && projectData.members && projectData.members.length > 0) {
-            const membersDetails = [];
-            for (const uid of projectData.members) {
+        // Dynamically populate membersDetails to ensure fresh data
+        // We ignore stored membersDetails in favor of re-fetching from Auth
+        if (projectData.members && projectData.members.length > 0) {
+            const membersDetailsPromises = projectData.members.map(async (uid) => {
                 try {
                     const userRecord = await admin.auth().getUser(uid);
-                    membersDetails.push({
+                    return {
                         uid,
                         name: userRecord.displayName || "Unknown",
                         photoURL: userRecord.photoURL
-                    });
+                    };
                 } catch (e) {
                     console.warn(`Failed to fetch user ${uid}`, e);
-                    membersDetails.push({ uid, name: "Unknown User" });
+                    return { uid, name: "Unknown User" };
                 }
-            }
-            projectData.membersDetails = membersDetails;
+            });
+
+            projectData.membersDetails = await Promise.all(membersDetailsPromises);
+        } else {
+            projectData.membersDetails = [];
         }
 
         res.json({ id: doc.id, ...projectData });
@@ -519,6 +522,44 @@ const deleteProject = async (req, res) => {
     }
 };
 
+const joinProjectInstant = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ error: "User ID required" });
+        }
+
+        const projectRef = db.collection('projects').doc(projectId);
+        const doc = await projectRef.get();
+
+        if (!doc.exists) {
+            return res.status(404).json({ error: "Project not found" });
+        }
+
+        const projectData = doc.data();
+
+        // Check if already a member or owner
+        if (projectData.ownerId === userId || (projectData.members && projectData.members.includes(userId))) {
+            return res.json({ success: true, message: "Already a member" });
+        }
+
+        // Add to members
+        await projectRef.update({
+            members: admin.firestore.FieldValue.arrayUnion(userId)
+        });
+
+        // Also create a branch for them (good practice for non-web projects)
+        // We'll trust getUserBranch to handle lazy creation, but we could do it here too.
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Error joining project:", error);
+        res.status(500).json({ error: "Failed to join project" });
+    }
+};
+
 module.exports = {
     createProject,
     getProjects,
@@ -531,5 +572,6 @@ module.exports = {
     getUserBranch,
     saveUserBranch,
     mergeBranch,
-    deleteProject
+    deleteProject,
+    joinProjectInstant
 };

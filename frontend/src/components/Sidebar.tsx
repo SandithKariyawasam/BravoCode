@@ -58,6 +58,30 @@ const Sidebar = ({ activeTab, setActiveTab, onCreateWebProject, webProjects }: {
                     <span className="sidebar-label">New Web Sandbox</span>
                 </button>
 
+                <button
+                    onClick={() => navigate('/sql-playground')}
+                    className="sidebar-btn"
+                    style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        background: 'linear-gradient(90deg, #238636 0%, #2ea043 100%)',
+                        border: 'none',
+                        color: 'white',
+                        padding: '10px 15px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '0.9rem',
+                        marginBottom: '10px'
+                    }}
+                >
+                    <span>💾</span>
+                    <span className="sidebar-label">SQL Playground</span>
+                </button>
+
                 {/* Web Projects List */}
                 {webProjects && webProjects.length > 0 && (
                     <div style={{ marginTop: '1rem' }}>

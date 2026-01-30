@@ -198,6 +198,14 @@ const ProjectEditor = () => {
         }
     };
 
+    // Share Functionality
+    const handleShare = () => {
+        const url = `${window.location.origin}/join/${projectId}`;
+        navigator.clipboard.writeText(url).then(() => {
+            alert(`Invite Link Copied!\n\n${url}\n\nShare this link to let others join instantly.`);
+        });
+    };
+
     if (!projectData) return <div style={{ color: 'white', padding: '20px' }}>Loading Project...</div>;
 
     if (projectData.language === 'web') {
@@ -218,6 +226,20 @@ const ProjectEditor = () => {
 
                 <h3 style={{ margin: '0 0 10px 0', color: colors.text }}>{projectData.title}</h3>
                 <p style={{ fontSize: '0.8rem', color: colors.textSecondary }}>{projectData.language}</p>
+
+                <div style={{ margin: '20px 0' }}>
+                    <button
+                        onClick={handleShare}
+                        style={{
+                            width: '100%', padding: '8px',
+                            backgroundColor: colors.buttonPrimary, color: 'white',
+                            border: 'none', borderRadius: '6px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px'
+                        }}
+                    >
+                        🔗 Share Invite Link
+                    </button>
+                </div>
 
                 <div style={{ marginTop: '20px', flex: 1, overflowY: 'auto' }}>
                     <h4 style={{ color: colors.text, borderBottom: `1px solid ${colors.border}`, paddingBottom: '5px', marginBottom: '10px' }}>Members</h4>

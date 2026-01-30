@@ -5,6 +5,8 @@ import Login from './auth/Login';
 
 import Dashboard from './pages/Home';
 import ProjectEditor from './pages/ProjectEditor';
+import SQLPlayground from './pages/SQLPlayground';
+import JoinProject from './pages/JoinProject';
 
 
 // Protected Route Wrapper
@@ -38,6 +40,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProjectEditor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sql-playground"
+            element={
+              <ProtectedRoute>
+                <SQLPlayground />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/join/:projectId"
+            element={
+              <ProtectedRoute>
+                <JoinProject />
               </ProtectedRoute>
             }
           />
