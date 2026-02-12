@@ -30,7 +30,7 @@ const WebProjectEditor = () => {
     const fetchProject = async (background = false) => {
         if (!projectId || !currentUser) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/project/${projectId}`);
+            const res = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}`);
             if (!res.ok) throw new Error("Project not found");
             const data = await res.json();
 
@@ -113,7 +113,7 @@ const WebProjectEditor = () => {
         try {
             const codeString = JSON.stringify({ html, css, js });
 
-            const response = await fetch(`http://localhost:5000/api/project/${projectId}`, {
+            const response = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: codeString })
@@ -136,7 +136,7 @@ const WebProjectEditor = () => {
         if (!confirm("⚠️ DELETE PROJECT?\n\nAre you sure you want to delete this project? This action CANNOT be undone.")) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/project/${projectId}`, {
+            const res = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ownerId: currentUser.uid })

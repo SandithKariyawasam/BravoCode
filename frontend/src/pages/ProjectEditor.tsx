@@ -38,7 +38,7 @@ const ProjectEditor = () => {
         const fetchData = async () => {
             try {
                 // 1. Get Project Details
-                const res = await fetch(`http://localhost:5000/api/project/${projectId}`);
+                const res = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}`);
                 if (!res.ok) throw new Error("Project not found");
                 const data = await res.json();
                 setProjectData(data);
@@ -49,7 +49,7 @@ const ProjectEditor = () => {
                     setIsMerged(false);
                 } else if (viewingMember) {
                     // Viewing another member's branch
-                    const branchRes = await fetch(`http://localhost:5000/api/project/${projectId}/branch/${viewingMember.id}`);
+                    const branchRes = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}/branch/${viewingMember.id}`);
                     if (branchRes.ok) {
                         const branchData = await branchRes.json();
                         setCode(branchData.code);
@@ -59,7 +59,7 @@ const ProjectEditor = () => {
                     }
                 } else {
                     // Get MY Branch Code
-                    const branchRes = await fetch(`http://localhost:5000/api/project/${projectId}/branch/${currentUser.uid}`);
+                    const branchRes = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}/branch/${currentUser.uid}`);
                     if (branchRes.ok) {
                         const branchData = await branchRes.json();
 
@@ -90,7 +90,7 @@ const ProjectEditor = () => {
         try {
             if (isEditingMain) {
                 // Update Main Project Directly
-                const response = await fetch(`http://localhost:5000/api/project/${projectId}`, {
+                const response = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code })
@@ -99,7 +99,7 @@ const ProjectEditor = () => {
                 alert("⚠️ DANGER: Main Branch Updated Directly!");
             } else {
                 // Save to User Branch
-                const response = await fetch(`http://localhost:5000/api/project/${projectId}/branch`, {
+                const response = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}/branch`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userId: currentUser.uid, code })
@@ -122,7 +122,7 @@ const ProjectEditor = () => {
         setOutput("Running...");
 
         try {
-            const response = await fetch('http://localhost:5000/api/run', {
+            const response = await fetch('https://bravocode-backend.vercel.app/api/run', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -152,7 +152,7 @@ const ProjectEditor = () => {
         if (!confirm("Are you sure you want to remove this member?")) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/project/${projectId}/remove`, {
+            const res = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}/remove`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ownerId: currentUser.uid, memberId })
@@ -161,7 +161,7 @@ const ProjectEditor = () => {
             if (res.ok) {
                 alert("Member removed");
                 // Refresh project data
-                const projectRes = await fetch(`http://localhost:5000/api/project/${projectId}`);
+                const projectRes = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}`);
                 const newData = await projectRes.json();
                 setProjectData(newData);
             } else {
@@ -179,7 +179,7 @@ const ProjectEditor = () => {
         if (!confirm("⚠️ DELETE PROJECT?\n\nAre you sure you want to delete this project? This action CANNOT be undone.")) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/project/${projectId}`, {
+            const res = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ownerId: currentUser.uid })

@@ -31,12 +31,12 @@ const MergeModal: React.FC<MergeModalProps> = ({ isOpen, onClose, projectId, own
         setLoading(true);
         try {
             // 1. Fetch Main Project Code (Original)
-            const mainRes = await fetch(`http://localhost:5000/api/project/${projectId}`);
+            const mainRes = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}`);
             const mainData = await mainRes.json();
             setMainCode(mainData.code || "");
 
             // 2. Fetch Member Branch Code (Modified)
-            const memberRes = await fetch(`http://localhost:5000/api/project/${projectId}/branch/${memberId}`);
+            const memberRes = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}/branch/${memberId}`);
             const memberData = await memberRes.json();
             setMemberCode(memberData.code || "");
 
@@ -66,7 +66,7 @@ const MergeModal: React.FC<MergeModalProps> = ({ isOpen, onClose, projectId, own
         if (!confirm(`Merge changes from ${memberName} into Main Branch? This cannot be undone.`)) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/project/${projectId}/merge`, {
+            const res = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}/merge`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ownerId, mergedCode, targetMemberId: memberId }) // We send the code from the "Modified" pane
