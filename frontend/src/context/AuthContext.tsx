@@ -1,10 +1,10 @@
 // client/src/context/AuthContext.tsx
-import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { 
-  signInWithPopup, 
-  signOut, 
-  onAuthStateChanged, 
-  type User 
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged,
+  type User
 } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
 

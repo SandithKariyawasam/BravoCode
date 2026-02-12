@@ -1,5 +1,5 @@
 // client/src/pages/Dashboard.tsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import CreateProjectModal from '../components/CreateProjectModal';
 import { useAuth } from '../context/AuthContext';

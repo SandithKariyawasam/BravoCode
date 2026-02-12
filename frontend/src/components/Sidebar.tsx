@@ -6,7 +6,7 @@ import logo from '../assets/images/BravoCode.png'
 
 const Sidebar = ({ activeTab, setActiveTab, onCreateWebProject, webProjects }: { activeTab: string, setActiveTab: (tab: string) => void, onCreateWebProject: () => void, webProjects: any[] }) => {
     const { logout, currentUser } = useAuth()!;
-    const { colors, theme } = useTheme();
+    const { colors } = useTheme();
     const navigate = useNavigate();
 
     return (
