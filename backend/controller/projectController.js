@@ -179,8 +179,8 @@ const getProjects = async (req, res) => {
             id: doc.id,
             ...doc.data(),
             // Convert timestamps to dates for frontend if needed, or keeping as is
-            createdAt: doc.data().createdAt?.toDate(),
-            lastSaved: doc.data().lastSaved?.toDate()
+            createdAt: typeof doc.data().createdAt?.toDate === 'function' ? doc.data().createdAt.toDate() : doc.data().createdAt,
+            lastSaved: typeof doc.data().lastSaved?.toDate === 'function' ? doc.data().lastSaved.toDate() : doc.data().lastSaved
         }));
 
         res.json(projects);
