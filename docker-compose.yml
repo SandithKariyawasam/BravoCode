@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ghcr.io/sandithkariyawasam/bravocode-backend:latest
+    container_name: bravocode_backend
+    ports:
+      - "5000:5000"
+    restart: always
+    environment:
+      - PORT=5000
+    volumes:
+      - type: bind
+        source: ./backend/gen-lang-client-0741249377-firebase-adminsdk-fbsvc-5a3960ea83.json
+        target: /app/gen-lang-client-0741249377-firebase-adminsdk-fbsvc-5a3960ea83.json
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: ghcr.io/sandithkariyawasam/bravocode-frontend:latest
+    container_name: bravocode_frontend
+    ports:
+      - "80:80"
+    restart: always
+    depends_on:
+      - backend
