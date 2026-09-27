@@ -87,29 +87,22 @@ jobs:
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
 
-  deploy-to-ec2:
+  deploy-to-asg:
     needs: build-and-push-images
     runs-on: ubuntu-latest
     
     steps:
-      - name: Deploy to EC2 instance
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            cd /home/ubuntu/BravoCode
-            git pull origin main
-            
-            # Pull new images
-            docker pull ghcr.io/${{ github.repository }}/bravocode-backend:latest
-            docker pull ghcr.io/${{ github.repository }}/bravocode-frontend:latest
-            
-            # Restart the docker containers with the new images
-            docker compose up -d
-            
-            # Clean up old unused images
-            docker image prune -f
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Trigger ASG Instance Refresh
+        run: |
+          echo "Triggering an Instance Refresh for the ASG to pull new Docker images..."
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name bravocode-asg \
+            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 120}'
+          echo "Instance refresh started! AWS will roll the instances safely."

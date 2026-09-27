@@ -16,7 +16,7 @@ const JoinProject = () => {
             if (!projectId || !currentUser) return;
 
             try {
-                const res = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}/join-instant`, {
+                const res = await fetch(`/api/project/${projectId}/join-instant`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userId: currentUser.uid })

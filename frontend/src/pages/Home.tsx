@@ -36,7 +36,7 @@ const Dashboard = () => {
   const fetchProjects = async () => {
     if (!currentUser) return;
     try {
-      const res = await fetch(`https://bravocode-backend.vercel.app/api/projects/${currentUser.uid}`);
+      const res = await fetch(`/api/projects/${currentUser.uid}`);
       const data = await res.json();
       setProjects(data);
     } catch (err) {
@@ -55,7 +55,7 @@ const Dashboard = () => {
     try {
       console.log("Attempting to create project via API...");
 
-      const response = await fetch('https://bravocode-backend.vercel.app/api/projects', {
+      const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,7 +90,7 @@ const Dashboard = () => {
     if (!currentUser || !searchId.trim()) return;
 
     try {
-      const response = await fetch(`https://bravocode-backend.vercel.app/api/project/${searchId.trim()}/join`, {
+      const response = await fetch(`/api/project/${searchId.trim()}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.uid, displayName: currentUser.displayName })
@@ -123,7 +123,7 @@ const Dashboard = () => {
 
     for (const project of myProjects) {
       try {
-        const res = await fetch(`https://bravocode-backend.vercel.app/api/project/${project.id}/requests`);
+        const res = await fetch(`/api/project/${project.id}/requests`);
         if (res.ok) {
           const reqs = await res.json();
           reqs.forEach((r: { userId: string, displayName: string }) => allRequests.push({ ...r, projectId: project.id, projectTitle: project.title }));
@@ -142,7 +142,7 @@ const Dashboard = () => {
   const handleRequestAction = async (projectId: string, userId: string, action: 'accept' | 'reject') => {
     if (!currentUser) return;
     try {
-      await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}/request`, {
+      await fetch(`/api/project/${projectId}/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, action, ownerId: currentUser.uid })
@@ -240,7 +240,7 @@ const Dashboard = () => {
                     if (confirmation !== 'DELETE') return;
 
                     try {
-                      const res = await fetch(`https://bravocode-backend.vercel.app/api/user/${currentUser?.uid}`, {
+                      const res = await fetch(`/api/user/${currentUser?.uid}`, {
                         method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ requesterId: currentUser?.uid })
