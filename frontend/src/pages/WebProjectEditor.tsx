@@ -1,8 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+
+interface WebProjectData {
+    title: string;
+    ownerId: string;
+    lastSaved?: { _seconds?: number } | number;
+    code?: string;
+}
 
 const WebProjectEditor = () => {
     const { projectId } = useParams();
@@ -10,7 +17,7 @@ const WebProjectEditor = () => {
     const { currentUser } = useAuth()!;
     const { colors, theme } = useTheme();
 
-    const [projectData, setProjectData] = useState<any>(null);
+    const [projectData, setProjectData] = useState<WebProjectData | null>(null);
     const [html, setHtml] = useState("");
     const [css, setCss] = useState("");
     const [js, setJs] = useState("");
@@ -27,7 +34,7 @@ const WebProjectEditor = () => {
     const [isLive, setIsLive] = useState(false);
     const [serverLastSaved, setServerLastSaved] = useState<number>(0);
 
-    const fetchProject = async (background = false) => {
+    const fetchProject = useCallback(async (background = false) => {
         if (!projectId || !currentUser) return;
         try {
             const res = await fetch(`https://bravocode-backend.vercel.app/api/project/${projectId}`);
@@ -66,12 +73,12 @@ const WebProjectEditor = () => {
                 navigate('/dashboard');
             }
         }
-    };
+    }, [projectId, currentUser, serverLastSaved, html, css, js, navigate]);
 
     // Initial Load
     useEffect(() => {
         fetchProject(false);
-    }, [projectId, navigate, currentUser]);
+    }, [fetchProject]);
 
     // Polling Loop
     useEffect(() => {
@@ -80,7 +87,7 @@ const WebProjectEditor = () => {
             fetchProject(true);
         }, 2000); // Poll every 2 seconds
         return () => clearInterval(interval);
-    }, [isLive, serverLastSaved, html, css, js, fetchProject]);
+    }, [isLive, fetchProject]);
 
 
     // 2. Update Preview (Debounced)
@@ -107,7 +114,7 @@ const WebProjectEditor = () => {
     }, [html, css, js]);
 
     // 3. Save Function (Backend PUT)
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         if (!projectId) return;
         setSaving(true);
         try {
@@ -128,7 +135,7 @@ const WebProjectEditor = () => {
         } finally {
             setSaving(false);
         }
-    };
+    }, [projectId, html, css, js]);
 
     // 4. Delete Project (Owner Only)
     const handleDeleteProject = async () => {
@@ -165,7 +172,7 @@ const WebProjectEditor = () => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [html, css, js]); // Re-bind with current state
+    }, [handleSave]); // Re-bind with current state
 
     if (loading) return <div style={{ color: colors.text, padding: '20px', backgroundColor: colors.background, height: '100vh' }}>Loading Editor...</div>;
 
@@ -219,7 +226,7 @@ const WebProjectEditor = () => {
                     </button>
                 </div>
                 <div style={{ marginTop: 'auto' }}>
-                    {currentUser?.uid === projectData.ownerId && (
+                    {currentUser?.uid === projectData?.ownerId && (
                         <button
                             onClick={handleDeleteProject}
                             style={{
@@ -251,7 +258,7 @@ const WebProjectEditor = () => {
                         {['html', 'css', 'js'].map((lang) => (
                             <button
                                 key={lang}
-                                onClick={() => setActiveTab(lang as any)}
+                                onClick={() => setActiveTab(lang as 'html' | 'css' | 'js')}
                                 style={{
                                     padding: '5px 15px',
                                     border: 'none',

@@ -4,7 +4,12 @@ import { useNavigate } from 'react-router-dom';
 
 import logo from '../assets/images/BravoCode.png'
 
-const Sidebar = ({ activeTab, setActiveTab, onCreateWebProject, webProjects }: { activeTab: string, setActiveTab: (tab: string) => void, onCreateWebProject: () => void, webProjects: any[] }) => {
+interface WebProject {
+    id: string;
+    title: string;
+}
+
+const Sidebar = ({ activeTab, setActiveTab, onCreateWebProject, webProjects }: { activeTab: string, setActiveTab: (tab: string) => void, onCreateWebProject: () => void, webProjects: WebProject[] }) => {
     const { logout, currentUser } = useAuth()!;
     const { colors } = useTheme();
     const navigate = useNavigate();
@@ -86,7 +91,7 @@ const Sidebar = ({ activeTab, setActiveTab, onCreateWebProject, webProjects }: {
                 {webProjects && webProjects.length > 0 && (
                     <div style={{ marginTop: '1rem' }}>
                         <p className="menu-header" style={{ fontSize: '0.75rem', color: colors.textSecondary, fontWeight: 'bold', marginBottom: '0.5rem', paddingLeft: '5px' }}>WEB SANDBOXES</p>
-                        {webProjects.map((project: any) => (
+                        {webProjects.map((project: WebProject) => (
                             <div
                                 key={project.id}
                                 onClick={() => navigate(`/editor/${project.id}`)}

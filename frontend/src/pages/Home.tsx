@@ -6,12 +6,28 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  language: string;
+  ownerId: string;
+  members?: string[];
+}
+
+interface JoinRequest {
+  projectId: string;
+  projectTitle: string;
+  userId: string;
+  displayName: string;
+}
+
 const Dashboard = () => {
   const { currentUser } = useAuth()!;
   const { theme, toggleTheme, colors } = useTheme();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [projects, setProjects] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [searchId, setSearchId] = useState("");
   const [activeTab, setActiveTab] = useState("my"); // 'my' | 'shared' | 'settings'
   const navigate = useNavigate();
@@ -98,11 +114,11 @@ const Dashboard = () => {
     }
   };
 
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<JoinRequest[]>([]);
 
   const fetchRequests = async () => {
     if (!currentUser) return;
-    let allRequests: any[] = [];
+    const allRequests: JoinRequest[] = [];
     const myProjects = projects.filter(p => p.ownerId === currentUser.uid);
 
     for (const project of myProjects) {
@@ -110,7 +126,7 @@ const Dashboard = () => {
         const res = await fetch(`https://bravocode-backend.vercel.app/api/project/${project.id}/requests`);
         if (res.ok) {
           const reqs = await res.json();
-          reqs.forEach((r: any) => allRequests.push({ ...r, projectId: project.id, projectTitle: project.title }));
+          reqs.forEach((r: { userId: string, displayName: string }) => allRequests.push({ ...r, projectId: project.id, projectTitle: project.title }));
         }
       } catch (e) { console.error(e); }
     }
@@ -134,6 +150,7 @@ const Dashboard = () => {
       fetchRequests();
       alert(`Request ${action}ed`);
     } catch (e) {
+      console.error(e);
       alert("Failed to process request");
     }
   };

@@ -1,17 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
-// @ts-ignore
+// @ts-expect-error - sql.js types are missing
 import initSqlJs from 'sql.js';
 import { useTheme } from '../context/ThemeContext';
+
+interface TableSchema {
+    name: string;
+    columns: { name: string; type: string }[];
+}
+
+interface QueryResult {
+    columns: string[];
+    values: (string | number | null)[][];
+}
 
 const SQLPlayground = () => {
     const navigate = useNavigate();
     const { colors, theme } = useTheme();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [db, setDb] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
-    const [result, setResult] = useState<any[]>([]);
-    const [schema, setSchema] = useState<any[]>([]); // { name: string, columns: {name, type}[] }
+    const [result, setResult] = useState<QueryResult[]>([]);
+    const [schema, setSchema] = useState<TableSchema[]>([]);
     const [code, setCode] = useState<string>(`-- Available Tables: Customers, Orders
 
 SELECT * FROM Customers;
@@ -22,6 +33,27 @@ SELECT * FROM Customers;
 -- JOIN Orders ON Customers.customer_id = Orders.customer_id;`);
 
     const [loading, setLoading] = useState(true);
+
+    const fetchSchema = useCallback((database: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+        try {
+            // Get list of tables
+            const tablesRes = database.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+            const tables = tablesRes[0]?.values.flat() || [];
+
+            const newSchema: TableSchema[] = [];
+            for (const table of tables) {
+                const colsRes = database.exec(`PRAGMA table_info(${table})`);
+                const columns = colsRes[0]?.values.map((col: (string | number)[]) => ({
+                    name: String(col[1]), // name
+                    type: String(col[2])  // type
+                })) || [];
+                newSchema.push({ name: String(table), columns });
+            }
+            setSchema(newSchema);
+        } catch (e) {
+            console.error("Error fetching schema", e);
+        }
+    }, []);
 
     // Initialize DB & Seed Data
     useEffect(() => {
@@ -74,28 +106,8 @@ SELECT * FROM Customers;
             }
         };
         loadSQL();
-    }, []);
+    }, [fetchSchema]);
 
-    const fetchSchema = (database: any) => {
-        try {
-            // Get list of tables
-            const tablesRes = database.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
-            const tables = tablesRes[0]?.values.flat() || [];
-
-            const newSchema = [];
-            for (const table of tables) {
-                const colsRes = database.exec(`PRAGMA table_info(${table})`);
-                const columns = colsRes[0]?.values.map((col: any) => ({
-                    name: col[1], // name
-                    type: col[2]  // type
-                }));
-                newSchema.push({ name: table, columns });
-            }
-            setSchema(newSchema);
-        } catch (e) {
-            console.error("Error fetching schema", e);
-        }
-    };
 
     const handleRun = () => {
         if (!db) return;
@@ -107,8 +119,12 @@ SELECT * FROM Customers;
             setResult(res);
             // Refresh schema in case they created/dropped tables
             fetchSchema(db);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError(String(err));
+            }
         }
     };
 
@@ -135,7 +151,7 @@ SELECT * FROM Customers;
                                 <span>📄</span> {table.name}
                             </div>
                             <div style={{ paddingLeft: '20px', borderLeft: `1px solid ${colors.border}` }}>
-                                {table.columns.map((col: any) => (
+                                {table.columns.map((col: { name: string; type: string }) => (
                                     <div key={col.name} style={{ fontSize: '0.85rem', color: colors.textSecondary, display: 'flex', justifyContent: 'space-between' }}>
                                         <span>{col.name}</span>
                                         <span style={{ fontSize: '0.75rem', color: colors.buttonPrimary }}>{col.type}</span>
@@ -218,10 +234,10 @@ SELECT * FROM Customers;
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {res.values.map((row: any[], rIdx: number) => (
+                                                {res.values.map((row: (string | number | null)[], rIdx: number) => (
                                                     <tr key={rIdx}>
-                                                        {row.map((val: any, vIdx: number) => (
-                                                            <td key={vIdx} style={{ padding: '8px', border: `1px solid ${colors.border}`, color: colors.text }}>{val}</td>
+                                                        {row.map((val: string | number | null, vIdx: number) => (
+                                                            <td key={vIdx} style={{ padding: '8px', border: `1px solid ${colors.border}`, color: colors.text }}>{String(val)}</td>
                                                         ))}
                                                     </tr>
                                                 ))}

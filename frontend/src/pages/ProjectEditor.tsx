@@ -1,10 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import MergeModal from '../components/MergeModal';
 import WebProjectEditor from './WebProjectEditor';
+
+interface ProjectData {
+    title: string;
+    language: string;
+    ownerId: string;
+    code?: string;
+    members?: string[];
+    membersDetails?: { uid: string, name: string }[];
+}
 
 const ProjectEditor = () => {
     const { projectId } = useParams();
@@ -13,7 +22,7 @@ const ProjectEditor = () => {
     const { currentUser } = useAuth()!; // Need current user to check ownership
     const { colors, theme } = useTheme();
     const [code, setCode] = useState("// Loading...");
-    const [projectData, setProjectData] = useState<any>(null);
+    const [projectData, setProjectData] = useState<ProjectData | null>(null);
     const [saving, setSaving] = useState(false);
     const [output, setOutput] = useState("");
     const [isRunning, setIsRunning] = useState(false);
@@ -81,10 +90,9 @@ const ProjectEditor = () => {
         };
 
         fetchData();
-        fetchData();
     }, [projectId, navigate, currentUser, isEditingMain, viewingMember]); // Re-fetch when mode changes
 
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         if (!projectId || !currentUser) return;
         setSaving(true);
         try {
@@ -114,10 +122,10 @@ const ProjectEditor = () => {
         } finally {
             setSaving(false);
         }
-    };
+    }, [projectId, currentUser, isEditingMain, code]);
 
     const handleRun = async () => {
-        if (!code) return;
+        if (!code || !projectData) return;
         setIsRunning(true);
         setOutput("Running...");
 
@@ -246,7 +254,7 @@ const ProjectEditor = () => {
 
                     {projectData.membersDetails && projectData.membersDetails.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                            {projectData.membersDetails.map((member: any) => (
+                            {projectData.membersDetails.map((member: { uid: string, name: string }) => (
                                 <div key={member.uid} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem' }}>
                                     <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: colors.border, display: 'flex', justifyContent: 'center', alignItems: 'center', color: colors.text, fontSize: '0.7rem' }}>
                                         {member.name ? member.name.charAt(0).toUpperCase() : '?'}
