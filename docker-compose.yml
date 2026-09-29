@@ -16,6 +16,7 @@ services:
       - type: bind
         source: ./backend/gen-lang-client-0741249377-firebase-adminsdk-fbsvc-5a3960ea83.json
         target: /app/gen-lang-client-0741249377-firebase-adminsdk-fbsvc-5a3960ea83.json
+      - /var/run/docker.sock:/var/run/docker.sock
 
   frontend:
     build:

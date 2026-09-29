@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     gnupg2 \
     tzdata \
     apt-transport-https \
+    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Install general Compilers and Interpreters (Java, Python, Go, Ruby, PHP, R, Scala)
