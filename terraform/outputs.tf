@@ -1,9 +1,14 @@
-output "alb_dns_name" {
-  description = "The DNS name of the Application Load Balancer"
-  value       = aws_lb.main.dns_name
+output "cluster_endpoint" {
+  description = "Endpoint for EKS control plane"
+  value       = module.eks.cluster_endpoint
 }
 
-output "ssm_connection_string" {
-  description = "Instructions to connect to instances via SSM"
-  value       = "Use AWS Systems Manager (SSM) Session Manager in the AWS Console to securely connect to your instances in the private subnets."
+output "cluster_name" {
+  description = "Kubernetes Cluster Name"
+  value       = module.eks.cluster_name
+}
+
+output "update_kubeconfig_command" {
+  description = "Command to connect your local kubectl to the EKS cluster"
+  value       = "aws eks update-kubeconfig --region ${var.aws_region} --name ${module.eks.cluster_name}"
 }

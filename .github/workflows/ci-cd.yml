@@ -87,11 +87,14 @@ jobs:
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
 
-  deploy-to-asg:
+  deploy-to-eks:
     needs: build-and-push-images
     runs-on: ubuntu-latest
     
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -99,10 +102,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Trigger ASG Instance Refresh
+      - name: Update Kubeconfig
+        run: aws eks update-kubeconfig --region us-east-1 --name bravocode-eks-cluster
+
+      - name: Apply Kubernetes Manifests
         run: |
-          echo "Triggering an Instance Refresh for the ASG to pull new Docker images..."
-          aws autoscaling start-instance-refresh \
-            --auto-scaling-group-name bravocode-asg \
-            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 120}'
-          echo "Instance refresh started! AWS will roll the instances safely."
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/backend.yaml
+          kubectl apply -f k8s/frontend.yaml
+          kubectl apply -f k8s/ingress.yaml
+          
+          # Force a rolling restart to pull the newly built 'latest' images
+          kubectl rollout restart deployment backend-deployment -n bravocode
+          kubectl rollout restart deployment frontend-deployment -n bravocode
+          
+          echo "Successfully deployed to EKS cluster!"
